@@ -52,5 +52,11 @@ Start the application using the following:
 
 Your default browser will automatically open the main UI at http://localhost:8080.
 
+After close the application: 
+
+    Ctrl+C
+
+To terminate all running processes in the code.
+
 
 
