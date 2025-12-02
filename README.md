@@ -12,15 +12,16 @@ Check if they are installed by running:
     npm -v
     docker --version
 
-If not installed, download and install **Node.js (LTS)**, **Docker** From:
-https://nodejs.org/
-https://www.docker.com/products/docker-desktop/
+If not installed, download and install:
+
+**Node.js (LTS)**: https://nodejs.org/
+**Docker**: https://www.docker.com/products/docker-desktop/
 
 Then restart your terminal and try again.
 
 ---
 
-## 2. The Repository
+## 2. The Repo
 
 Clone the repository:
 
@@ -54,8 +55,6 @@ OR (if package.json defines a start script):
 
 If the server works correctly, you should see a message such as:
 
-    Spotify UI server running at
+    Spotify UI server running at http://localhost:3000
 
-Then open your browser and go to:
 
-    http://localhost:3000
