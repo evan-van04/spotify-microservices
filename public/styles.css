@@ -160,6 +160,21 @@ main {
   margin-bottom: 2rem;
 }
 
+/* Dashboard title color treatment */
+.dashboard-title {
+  text-align: center;
+}
+
+.dashboard-title .dash-track {
+  color: #58a6ff; /* Same blue as navbar brand */
+  font-weight: 700;
+}
+
+.dashboard-title .dash-iq {
+  color: #f97316; /* Same orange as navbar brand */
+  font-weight: 700;
+}
+
 /* ============== */
 /* Generic blocks */
 /* ============== */
