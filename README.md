@@ -46,16 +46,11 @@ This will install all required packages (including Express) into the `node_modul
 
 ## 4. Run the Server
 
-Start the application using one of the following:
+Start the application using the following:
 
-    node server.js
+    node start-all.js
 
-OR (if package.json defines a start script):
+Your default browser will automatically open the main UI at http://localhost:8080.
 
-    npm start
-
-If the server works correctly, you should see a message such as:
-
-    Spotify UI server running at http://localhost:3000
 
 
