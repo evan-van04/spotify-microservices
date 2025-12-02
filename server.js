@@ -57,7 +57,23 @@ function computePopularityTier(popularity) {
   return 'Popularity tier: Niche / underground';
 }
 
-// API: Song Stats (metadata only – no audio features)
+// Helper: format ms -> "H hr M min" or "M:SS"
+function formatDurationMs(msTotal) {
+  if (msTotal == null) return null;
+  const totalSeconds = Math.round(msTotal / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours} hr ${minutes} min`;
+  }
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+// =====================
+// API: Song Stats
+// =====================
 // GET /api/song-stats?q=<song name or query>
 app.get('/api/song-stats', async (req, res) => {
   try {
@@ -128,21 +144,9 @@ app.get('/api/song-stats', async (req, res) => {
   }
 });
 
-// Helper to format ms -> "H hr M min" or "M:SS"
-function formatDurationMs(msTotal) {
-  if (msTotal == null) return null;
-  const totalSeconds = Math.round(msTotal / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours} hr ${minutes} min`;
-  }
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
-// API: Album Analyzer – keyword-based album search, ranks tracks by popularity
+// =====================
+// API: Album Analyzer
+// =====================
 // GET /api/album-analyzer?q=<album name or query>
 app.get('/api/album-analyzer', async (req, res) => {
   try {
@@ -313,6 +317,297 @@ app.get('/api/album-analyzer', async (req, res) => {
   }
 });
 
+// ===============================
+// Helper for Song Similarity
+// ===============================
+function computeSimilarityScore(seed, candidate, flags) {
+  let score = 0;
+
+  const {
+    isSameArtist = false,
+    isFromRelatedArtist = false,
+    yearDiff,
+    popularityDiff,
+    durationDiffSec,
+    explicitMismatch
+  } = flags;
+
+  if (isSameArtist) score += 3;
+  else if (isFromRelatedArtist) score += 2;
+
+  if (yearDiff != null) {
+    if (yearDiff <= 1) score += 1.5;
+    else if (yearDiff <= 3) score += 1.0;
+  }
+
+  if (popularityDiff != null) {
+    score -= popularityDiff * 0.03; // up to ~3 points penalty for huge diff
+  }
+
+  if (durationDiffSec != null) {
+    const durationPenalty = Math.min(durationDiffSec / 15 * 0.5, 3);
+    score -= durationPenalty;
+  }
+
+  if (explicitMismatch) {
+    score -= 0.5;
+  }
+
+  return score;
+}
+
+// =====================
+// API: Song Similarity
+// =====================
+// GET /api/song-similarity?q=<song name or query>
+app.get('/api/song-similarity', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({
+        error: 'Missing q query parameter (song name or query)'
+      });
+    }
+
+    // 1) Resolve seed track
+    const searchUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/search?q=${encodeURIComponent(query)}`;
+    const searchRes = await fetch(searchUrl);
+
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Song Similarity: search error:', text);
+      return res.status(searchRes.status).json({ error: 'Failed to search track' });
+    }
+
+    const searchData = await searchRes.json();
+    const items = searchData?.tracks?.items || [];
+
+    if (items.length === 0) {
+      return res.status(404).json({ error: 'No track found for that query' });
+    }
+
+    const seedTrack = items[0];
+    const seedArtist = seedTrack.artists?.[0] || null;
+    const seedArtistId = seedArtist?.id;
+
+    if (!seedArtistId) {
+      return res.status(400).json({ error: 'Seed track has no primary artist; cannot compute similarity.' });
+    }
+
+    const seedReleaseDate = seedTrack.album?.release_date || null;
+    const seedReleaseYear = seedReleaseDate ? parseInt(seedReleaseDate.slice(0, 4), 10) : null;
+    const seedDurationMs = seedTrack.duration_ms ?? null;
+    const seedPopularity = seedTrack.popularity ?? null;
+    const seedExplicit = !!seedTrack.explicit;
+
+    const baseSeed = {
+      trackId: seedTrack.id,
+      trackName: seedTrack.name,
+      artistName: seedTrack.artists?.map(a => a.name).join(', ') || null,
+      albumName: seedTrack.album?.name || null,
+      albumImage: seedTrack.album?.images?.[0]?.url || null,
+      popularity: seedPopularity,
+      durationMs: seedDurationMs,
+      durationFormatted: formatDurationMs(seedDurationMs),
+      releaseYear: seedReleaseYear,
+      explicit: seedExplicit
+    };
+
+    // 2) Fetch same-artist top tracks + related artists
+    const topTracksUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/top-tracks`;
+    const relatedArtistsUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/related-artists`;
+
+    const [topRes, relatedRes] = await Promise.all([
+      fetch(topTracksUrl),
+      fetch(relatedArtistsUrl)
+    ]);
+
+    if (!topRes.ok) {
+      const text = await topRes.text();
+      console.error('Song Similarity: artist top tracks error:', text);
+    }
+
+    if (!relatedRes.ok) {
+      const text = await relatedRes.text();
+      console.error('Song Similarity: related artists error:', text);
+    }
+
+    const topData = topRes.ok ? await topRes.json() : { tracks: [] };
+    const relatedData = relatedRes.ok ? await relatedRes.json() : { artists: [] };
+
+    const sameArtistTracks = topData.tracks || [];
+    const relatedArtists = relatedData.artists || [];
+
+    // For related artists, fetch top tracks for top 3 related artists (if any)
+    const relatedTopPromises = relatedArtists.slice(0, 3).map(async (artist) => {
+      if (!artist.id) return null;
+      const url = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artist.id}/top-tracks`;
+      const r = await fetch(url);
+      if (!r.ok) {
+        const txt = await r.text();
+        console.error(`Song Similarity: related artist top-tracks error for ${artist.id}:`, txt);
+        return null;
+      }
+      const data = await r.json();
+      return { artist, tracks: data.tracks || [] };
+    });
+
+    const relatedTopResults = await Promise.all(relatedTopPromises);
+
+    // 3) Build candidate pool
+    const candidatesMap = new Map();
+
+    // Helper to add candidate
+    function addCandidate(track, opts) {
+      if (!track || !track.id) return;
+      if (track.id === seedTrack.id) return; // don't recommend exact same track
+
+      if (candidatesMap.has(track.id)) return;
+
+      const releaseDate = track.album?.release_date || null;
+      const releaseYear = releaseDate ? parseInt(releaseDate.slice(0, 4), 10) : null;
+      const durationMs = track.duration_ms ?? null;
+      const popularity = track.popularity ?? null;
+      const explicit = !!track.explicit;
+
+      candidatesMap.set(track.id, {
+        track,
+        meta: {
+          releaseYear,
+          durationMs,
+          popularity,
+          explicit,
+          isSameArtist: !!opts.isSameArtist,
+          isFromRelatedArtist: !!opts.isFromRelatedArtist,
+          sourceArtistName: opts.sourceArtistName || null
+        }
+      });
+    }
+
+    // Same-artist top tracks
+    for (const t of sameArtistTracks) {
+      addCandidate(t, {
+        isSameArtist: true,
+        isFromRelatedArtist: false,
+        sourceArtistName: seedArtist?.name || null
+      });
+    }
+
+    // Related-artist top tracks
+    for (const block of relatedTopResults) {
+      if (!block) continue;
+      const artist = block.artist;
+      const tracks = block.tracks || [];
+      for (const t of tracks) {
+        addCandidate(t, {
+          isSameArtist: false,
+          isFromRelatedArtist: true,
+          sourceArtistName: artist?.name || null
+        });
+      }
+    }
+
+    const seed = {
+      popularity: seedPopularity,
+      durationMs: seedDurationMs,
+      releaseYear: seedReleaseYear,
+      explicit: seedExplicit
+    };
+
+    // 4) Score candidates & pick top 5
+    const scored = [];
+
+    for (const [id, entry] of candidatesMap.entries()) {
+      const { track, meta } = entry;
+
+      const popularityDiff =
+        seed.popularity != null && meta.popularity != null
+          ? Math.abs(seed.popularity - meta.popularity)
+          : null;
+
+      const durationDiffSec =
+        seed.durationMs != null && meta.durationMs != null
+          ? Math.abs(seed.durationMs - meta.durationMs) / 1000
+          : null;
+
+      const yearDiff =
+        seed.releaseYear != null && meta.releaseYear != null
+          ? Math.abs(seed.releaseYear - meta.releaseYear)
+          : null;
+
+      const explicitMismatch =
+        seed.explicit != null && meta.explicit != null
+          ? seed.explicit !== meta.explicit
+          : false;
+
+      const score = computeSimilarityScore(seed, meta, {
+        isSameArtist: meta.isSameArtist,
+        isFromRelatedArtist: meta.isFromRelatedArtist,
+        yearDiff,
+        popularityDiff,
+        durationDiffSec,
+        explicitMismatch
+      });
+
+      // Build a short "reason" summary
+      const reasons = [];
+      if (meta.isSameArtist) reasons.push('same artist');
+      else if (meta.isFromRelatedArtist) reasons.push('related artist');
+
+      if (yearDiff != null && yearDiff <= 2) reasons.push('similar era');
+      if (popularityDiff != null && popularityDiff <= 10) reasons.push('similar popularity');
+      if (durationDiffSec != null && durationDiffSec <= 20) reasons.push('similar length');
+
+      const reasonSummary = reasons.length
+        ? reasons.join(' · ')
+        : 'similar by track metadata';
+
+      scored.push({
+        id,
+        track,
+        meta,
+        score,
+        reasonSummary
+      });
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const topN = scored.slice(0, 5);
+
+    const recommendations = topN.map((entry, idx) => {
+      const t = entry.track;
+      const m = entry.meta;
+
+      const releaseYear = m.releaseYear;
+      const durationFormatted = formatDurationMs(m.durationMs);
+
+      return {
+        rank: idx + 1,
+        trackId: t.id,
+        trackName: t.name,
+        artistName: t.artists?.map(a => a.name).join(', ') || 'Unknown artist',
+        albumName: t.album?.name || 'Unknown album',
+        albumImage: t.album?.images?.[0]?.url || null,
+        popularity: m.popularity,
+        durationFormatted,
+        releaseYear,
+        reasonSummary: entry.reasonSummary
+      };
+    });
+
+    const result = {
+      seedTrack: baseSeed,
+      recommendations
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error('Song Similarity endpoint error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Spotify UI, Song Stats & Album Analyzer service running at http://localhost:${PORT}`);
+  console.log(`Spotify UI, Song Stats, Album Analyzer & Song Similarity service running at http://localhost:${PORT}`);
 });

@@ -24,23 +24,193 @@
   <main>
     <h1 class="page-title">Song Similarity</h1>
     <p class="page-subtitle">
-      “Give me songs similar to this one song.” – Leverage audio features to recommend tracks
-      with similar mood, tempo, and energy.
+      “Give me songs similar to this one song.” – Type a song name or keywords and TrackIQ
+      finds five closely related tracks using artist graph + metadata
+      (same artist, related artists, era, popularity, and length).
     </p>
 
-    <div class="placeholder-box">
-      UI placeholder for Song Similarity microservice.<br><br>
-      Later you can add:
-      <ul>
-        <li>Input for source track</li>
-        <li>Button to call your similarity microservice</li>
-        <li>List of recommended songs with key stats</li>
-      </ul>
+    <div class="card similarity-card">
+      <form id="similarityForm" class="similarity-form">
+        <label for="similarityQuery">Song name or keywords</label>
+        <input
+          id="similarityQuery"
+          type="text"
+          placeholder="e.g. Blinding Lights, The Weeknd"
+          required
+        />
+        <button type="submit">Find Similar Songs</button>
+        <p class="helper-text">
+          We resolve your query to the best-matching Spotify track, then suggest five
+          related songs.
+        </p>
+      </form>
+
+      <div id="similarityLoading" style="display:none; margin-top: 1rem;">
+        Finding similar songs…
+      </div>
+
+      <div id="similarityError" style="display:none; margin-top: 1rem; color: #dc2626;">
+      </div>
+
+      <div id="similarityResult" class="similarity-result" style="display:none; margin-top: 1.5rem;">
+        <!-- Seed track header -->
+        <div class="similar-header">
+          <img
+            id="seedAlbumImage"
+            src=""
+            alt=""
+            class="similar-cover"
+            style="display:none;"
+          />
+          <div class="similar-meta">
+            <p class="seed-label">Source track</p>
+            <h2 id="seedTrackName" class="similar-title"></h2>
+            <p id="seedArtistLine" class="subtext"></p>
+            <p id="seedAlbumLine" class="subtext"></p>
+            <p id="seedDetailLine" class="subtext seed-details"></p>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="similar-tracks-section">
+          <h3 class="tracks-title">5 related tracks</h3>
+          <div id="similarTracksGrid" class="similar-tracks-grid">
+            <!-- cards injected via JS -->
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
   <footer>
     TrackIQ · Song Similarity
   </footer>
+
+  <script>
+    const similarityForm = document.getElementById('similarityForm');
+    const similarityQueryInput = document.getElementById('similarityQuery');
+    const loadingEl = document.getElementById('similarityLoading');
+    const errorEl = document.getElementById('similarityError');
+    const resultEl = document.getElementById('similarityResult');
+
+    const seedAlbumImageEl = document.getElementById('seedAlbumImage');
+    const seedTrackNameEl = document.getElementById('seedTrackName');
+    const seedArtistLineEl = document.getElementById('seedArtistLine');
+    const seedAlbumLineEl = document.getElementById('seedAlbumLine');
+    const seedDetailLineEl = document.getElementById('seedDetailLine');
+
+    const similarTracksGridEl = document.getElementById('similarTracksGrid');
+
+    similarityForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const q = similarityQueryInput.value.trim();
+      if (!q) return;
+
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+      resultEl.style.display = 'none';
+      loadingEl.style.display = 'block';
+
+      try {
+        const res = await fetch(`/api/song-similarity?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        loadingEl.style.display = 'none';
+
+        if (!res.ok) {
+          errorEl.style.display = 'block';
+          errorEl.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+
+        // Seed track header
+        const seed = data.seedTrack || {};
+        const seedTrackName = seed.trackName || 'Unknown track';
+        const seedArtistName = seed.artistName || 'Unknown artist';
+        const seedAlbumName = seed.albumName || 'Unknown album';
+
+        seedTrackNameEl.textContent = seedTrackName;
+        seedArtistLineEl.textContent = `By ${seedArtistName}`;
+        seedAlbumLineEl.textContent = `Album: ${seedAlbumName}`;
+
+        const seedDetails = [];
+        if (seed.releaseYear) seedDetails.push(`Year: ${seed.releaseYear}`);
+        if (seed.durationFormatted) seedDetails.push(`Duration: ${seed.durationFormatted}`);
+        if (seed.popularity != null) seedDetails.push(`Popularity: ${seed.popularity} / 100`);
+        seedDetailLineEl.textContent = seedDetails.join(' · ');
+
+        if (seed.albumImage) {
+          seedAlbumImageEl.src = seed.albumImage;
+          seedAlbumImageEl.alt = seedAlbumName || 'Album cover';
+          seedAlbumImageEl.style.display = 'block';
+        } else {
+          seedAlbumImageEl.style.display = 'none';
+        }
+
+        // Recommendations
+        similarTracksGridEl.innerHTML = '';
+        (data.recommendations || []).forEach((rec) => {
+          const card = document.createElement('div');
+          card.className = 'similar-track-card';
+
+          const rankBadge = document.createElement('div');
+          rankBadge.className = 'similar-rank';
+          rankBadge.textContent = rec.rank ?? '';
+
+          const cover = document.createElement('img');
+          cover.className = 'similar-track-cover';
+          if (rec.albumImage) {
+            cover.src = rec.albumImage;
+            cover.alt = rec.albumName || 'Album cover';
+          } else {
+            cover.style.display = 'none';
+          }
+
+          const info = document.createElement('div');
+          info.className = 'similar-track-info';
+
+          const title = document.createElement('div');
+          title.className = 'similar-track-title';
+          title.textContent = rec.trackName || 'Unknown track';
+
+          const artist = document.createElement('div');
+          artist.className = 'similar-track-artist';
+          artist.textContent = rec.artistName || 'Unknown artist';
+
+          const meta = document.createElement('div');
+          meta.className = 'similar-track-meta';
+
+          const metaParts = [];
+          if (rec.albumName) metaParts.push(rec.albumName);
+          if (rec.releaseYear) metaParts.push(rec.releaseYear);
+          if (rec.durationFormatted) metaParts.push(rec.durationFormatted);
+          if (rec.popularity != null) metaParts.push(`Pop: ${rec.popularity} / 100`);
+          meta.textContent = metaParts.join(' · ');
+
+          const reason = document.createElement('div');
+          reason.className = 'similar-track-reason';
+          reason.textContent = rec.reasonSummary || 'Similar by metadata';
+
+          info.appendChild(title);
+          info.appendChild(artist);
+          info.appendChild(meta);
+          info.appendChild(reason);
+
+          card.appendChild(rankBadge);
+          card.appendChild(cover);
+          card.appendChild(info);
+
+          similarTracksGridEl.appendChild(card);
+        });
+
+        resultEl.style.display = 'block';
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Request failed: ' + err.message;
+      }
+    });
+  </script>
 </body>
 </html>

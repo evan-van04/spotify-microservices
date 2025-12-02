@@ -163,7 +163,7 @@ app.get('/spotify/search', async (req, res) => {
   }
 });
 
-// Search playlists by name (not used by album analyzer, kept for future)
+// Search playlists by name (kept for future)
 app.get('/spotify/search-playlists', async (req, res) => {
   try {
     const q = req.query.q;
@@ -197,7 +197,7 @@ app.get('/spotify/search-playlists', async (req, res) => {
   }
 });
 
-// Get playlist details (not used by album analyzer, kept for future)
+// Get playlist details (kept for future)
 // GET /spotify/playlists/:playlistId
 app.get('/spotify/playlists/:playlistId', async (req, res) => {
   try {
@@ -290,6 +290,68 @@ app.get('/spotify/albums/:albumId', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('Proxy albums error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// NEW: Artist's top tracks
+// GET /spotify/artists/:artistId/top-tracks
+app.get('/spotify/artists/:artistId/top-tracks', async (req, res) => {
+  try {
+    const artistId = req.params.artistId;
+    const token = await getSpotifyAppToken();
+
+    const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`;
+    const topRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!topRes.ok) {
+      const text = await topRes.text();
+      console.error('Spotify artist top-tracks error:', text);
+      return res
+        .status(topRes.status)
+        .json({ error: 'Spotify artist top-tracks failed', raw: text });
+    }
+
+    const data = await topRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy artists top-tracks error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// NEW: Related artists
+// GET /spotify/artists/:artistId/related-artists
+app.get('/spotify/artists/:artistId/related-artists', async (req, res) => {
+  try {
+    const artistId = req.params.artistId;
+    const token = await getSpotifyAppToken();
+
+    const url = `https://api.spotify.com/v1/artists/${artistId}/related-artists`;
+    const r = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!r.ok) {
+      const text = await r.text();
+      console.error('Spotify related-artists error:', text);
+      return res
+        .status(r.status)
+        .json({ error: 'Spotify related-artists failed', raw: text });
+    }
+
+    const data = await r.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy related-artists error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

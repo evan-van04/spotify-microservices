@@ -250,7 +250,7 @@ footer {
 }
 
 /* ========================= */
-/* Playlist Analyzer page    */
+/* Playlist / Album Analyzer */
 /* ========================= */
 
 .playlist-card {
@@ -390,4 +390,171 @@ footer {
 
 .tracks-table tbody tr:hover {
   background: #111827;
+}
+
+/* ========================= */
+/* Song Similarity page      */
+/* ========================= */
+
+.similarity-card {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.similarity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.similarity-form label {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.similarity-form input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #f9fafb;
+}
+
+.similarity-form input::placeholder {
+  color: #6b7280;
+}
+
+.similarity-form button {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.similarity-form button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.similarity-form .helper-text {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Seed header */
+.similarity-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.similar-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.similar-cover {
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.similar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.seed-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.similar-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.seed-details {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+/* Recommendations grid */
+.similar-tracks-section {
+  margin-top: 0.5rem;
+}
+
+.similar-tracks-grid {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.75rem;
+}
+
+.similar-track-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  background: #020617;
+  border: 1px solid #1f2937;
+}
+
+.similar-rank {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.similar-track-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.similar-track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.similar-track-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.similar-track-artist {
+  font-size: 0.85rem;
+  color: #cbd5f5;
+}
+
+.similar-track-meta {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.similar-track-reason {
+  font-size: 0.78rem;
+  color: #6b7280;
 }
