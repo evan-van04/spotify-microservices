@@ -34,12 +34,12 @@ header {
 .brand {
   font-weight: 700;
   font-size: 1.1rem;
-  color: #58a6ff;
+  color: #58a6ff;   /* Track color (same blue as nav) */
   text-decoration: none;
 }
 
 .brand span {
-  color: #f97316;
+  color: #f97316;  /* IQ color (orange) */
 }
 
 nav ul {
@@ -75,8 +75,13 @@ main {
   margin: 0 auto;
 }
 
+/* ============== */
+/* Landing hero   */
+/* ============== */
+
 .hero {
   margin-top: 3rem;
+  text-align: center;  /* center heading + team info */
 }
 
 .hero h1 {
@@ -88,8 +93,14 @@ main {
   font-size: 1.05rem;
   color: #cbd5f5;
   max-width: 600px;
+  margin: 0.25rem auto; /* center text block */
 }
 
+/* ============== */
+/* Generic grid   */
+/* ============== */
+
+/* Default grid behavior (used by other pages too) */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -97,6 +108,7 @@ main {
   margin-top: 2rem;
 }
 
+/* Generic card used across the app */
 .card {
   background: #111827;
   border-radius: 0.75rem;
@@ -114,6 +126,29 @@ main {
   color: #cbd5f5;
 }
 
+/* ============== */
+/* Dashboard-only layout tweaks */
+/* ============== */
+
+/* Only the grid directly after .hero (landing page) gets the 3/2 centered layout */
+.hero + .grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+/* Only cards inside that dashboard grid get a fixed width
+   -> gives you 3 cards on first row, 2 centered below */
+.hero + .grid .card {
+  width: 280px;
+  max-width: 100%;
+}
+
+/* ============== */
+/* Page headings  */
+/* ============== */
+
 .page-title {
   font-size: 1.8rem;
   margin-bottom: 0.5rem;
@@ -124,6 +159,10 @@ main {
   color: #cbd5f5;
   margin-bottom: 2rem;
 }
+
+/* ============== */
+/* Generic blocks */
+/* ============== */
 
 .placeholder-box {
   margin-top: 1.5rem;
@@ -143,55 +182,15 @@ footer {
   text-align: center;
 }
 
-/* ========================= */
-/* Song Stats page specifics */
-/* ========================= */
+/* ============================= */
+/* Shared search form styling    */
+/* (Song Stats, Similarity, etc) */
+/* ============================= */
 
-/* Slightly constrain the Song Stats card only */
-.song-card {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-/* Center the whole result content */
-.song-result {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Album cover + title block */
-.song-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: center;
-}
-
-/* Album artwork styling */
-.song-header .album-cover {
-  width: 160px;
-  height: 160px;
-  border-radius: 12px;
-  object-fit: cover;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-/* Track title */
-.track-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-/* "By The Weeknd" line */
-.song-meta .subtext {
-  color: #cbd5f5;
-  opacity: 0.85;
-}
-
-/* Search form styling */
-.song-stats-form {
+.song-stats-form,
+.playlist-form,
+.similarity-form,
+.trend-form {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -199,13 +198,19 @@ footer {
   margin-bottom: 1rem;
 }
 
-.song-stats-form label {
+.song-stats-form label,
+.playlist-form label,
+.similarity-form label,
+.trend-form label {
   flex-basis: 100%;
   font-size: 0.9rem;
   color: #9ca3af;
 }
 
-.song-stats-form input {
+.song-stats-form input,
+.playlist-form input,
+.similarity-form input,
+.trend-form input {
   flex: 1;
   min-width: 220px;
   padding: 0.5rem 0.75rem;
@@ -215,11 +220,17 @@ footer {
   color: #f9fafb;
 }
 
-.song-stats-form input::placeholder {
+.song-stats-form input::placeholder,
+.playlist-form input::placeholder,
+.similarity-form input::placeholder,
+.trend-form input::placeholder {
   color: #6b7280;
 }
 
-.song-stats-form button {
+.song-stats-form button,
+.playlist-form button,
+.similarity-form button,
+.trend-form button {
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
   border: none;
@@ -230,12 +241,55 @@ footer {
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.song-stats-form button:hover {
+.song-stats-form button:hover,
+.playlist-form button:hover,
+.similarity-form button:hover,
+.trend-form button:hover {
   background: #1d4ed8;
   transform: translateY(-1px);
 }
 
-/* Stats layout */
+/* ========================= */
+/* Song Stats page specifics */
+/* ========================= */
+
+.song-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.song-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.song-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.song-header .album-cover {
+  width: 160px;
+  height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.track-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.song-meta .subtext {
+  color: #cbd5f5;
+  opacity: 0.85;
+}
+
 .stats-grid {
   margin-top: 1.5rem;
   width: 100%;
@@ -258,53 +312,12 @@ footer {
   margin: 0 auto;
 }
 
-.playlist-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.playlist-form label {
-  font-size: 0.9rem;
-  color: #9ca3af;
-}
-
-.playlist-form input {
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #374151;
-  background: #020617;
-  color: #f9fafb;
-}
-
-.playlist-form input::placeholder {
-  color: #6b7280;
-}
-
-.playlist-form button {
-  align-self: flex-start;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 999px;
-  border: none;
-  background: #2563eb;
-  color: #ffffff;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.playlist-form button:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-}
-
 .playlist-form .helper-text {
+  flex-basis: 100%;
   font-size: 0.8rem;
   color: #6b7280;
 }
 
-/* Header area with cover + basic info */
 .playlist-result {
   display: flex;
   flex-direction: column;
@@ -336,7 +349,6 @@ footer {
   font-weight: 700;
 }
 
-/* Summary stat chips */
 .playlist-summary {
   margin-top: 0.5rem;
   display: grid;
@@ -348,7 +360,6 @@ footer {
   font-size: 0.95rem;
 }
 
-/* Tracks table */
 .tracks-section {
   margin-top: 1.25rem;
 }
@@ -401,53 +412,12 @@ footer {
   margin: 0 auto;
 }
 
-.similarity-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.similarity-form label {
-  font-size: 0.9rem;
-  color: #9ca3af;
-}
-
-.similarity-form input {
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #374151;
-  background: #020617;
-  color: #f9fafb;
-}
-
-.similarity-form input::placeholder {
-  color: #6b7280;
-}
-
-.similarity-form button {
-  align-self: flex-start;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 999px;
-  border: none;
-  background: #2563eb;
-  color: #ffffff;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.similarity-form button:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-}
-
 .similarity-form .helper-text {
+  flex-basis: 100%;
   font-size: 0.8rem;
   color: #6b7280;
 }
 
-/* Seed header */
 .similarity-result {
   display: flex;
   flex-direction: column;
@@ -491,7 +461,6 @@ footer {
   font-size: 0.85rem;
 }
 
-/* Recommendations grid */
 .similar-tracks-section {
   margin-top: 0.5rem;
 }
@@ -557,4 +526,98 @@ footer {
 .similar-track-reason {
   font-size: 0.78rem;
   color: #6b7280;
+}
+
+/* ========================= */
+/* Trend Analytics page      */
+/* ========================= */
+
+.trend-card {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.trend-form .helper-text {
+  flex-basis: 100%;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.trend-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trend-summary {
+  font-size: 0.9rem;
+  color: #cbd5f5;
+  margin-bottom: 0.5rem;
+}
+
+/* Keep your existing centered form styling here if needed */
+#trendForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+#trendForm label {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+#trendForm select,
+#trendForm button {
+  display: inline-block;
+}
+
+#countryInput {
+  min-width: 230px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #f9fafb;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font-size: 0.9rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  margin-right: 0.75rem;
+}
+
+#countryInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb, 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+#countryInput:hover {
+  border-color: #4b5563;
+}
+
+#trendForm button {
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+#trendForm button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+#trendForm .helper-text {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
 }

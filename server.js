@@ -1,3 +1,5 @@
+// 8080 server.js  --- main UI + microservices
+
 const express = require('express');
 const path = require('path');
 
@@ -71,6 +73,219 @@ function formatDurationMs(msTotal) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+// Simple mapping from market code to display label
+const COUNTRY_LABELS = {
+  GLOBAL: 'Global',
+
+  AD: 'Andorra',
+  AE: 'United Arab Emirates',
+  AG: 'Antigua and Barbuda',
+  AL: 'Albania',
+  AM: 'Armenia',
+  AO: 'Angola',
+  AR: 'Argentina',
+  AT: 'Austria',
+  AU: 'Australia',
+  AZ: 'Azerbaijan',
+
+  BA: 'Bosnia and Herzegovina',
+  BB: 'Barbados',
+  BD: 'Bangladesh',
+  BE: 'Belgium',
+  BF: 'Burkina Faso',
+  BG: 'Bulgaria',
+  BH: 'Bahrain',
+  BI: 'Burundi',
+  BJ: 'Benin',
+  BN: 'Brunei Darussalam',
+  BO: 'Bolivia',
+  BR: 'Brazil',
+  BS: 'Bahamas',
+  BT: 'Bhutan',
+  BW: 'Botswana',
+  BY: 'Belarus',
+  BZ: 'Belize',
+
+  CA: 'Canada',
+  CD: 'Congo - Kinshasa',
+  CG: 'Congo - Brazzaville',
+  CH: 'Switzerland',
+  CI: "Côte d’Ivoire",
+  CL: 'Chile',
+  CM: 'Cameroon',
+  CO: 'Colombia',
+  CR: 'Costa Rica',
+  CV: 'Cabo Verde',
+  CW: 'Curaçao',
+  CY: 'Cyprus',
+  CZ: 'Czech Republic',
+
+  DE: 'Germany',
+  DJ: 'Djibouti',
+  DK: 'Denmark',
+  DM: 'Dominica',
+  DO: 'Dominican Republic',
+  DZ: 'Algeria',
+
+  EC: 'Ecuador',
+  EE: 'Estonia',
+  EG: 'Egypt',
+  ES: 'Spain',
+  ET: 'Ethiopia',
+
+  FI: 'Finland',
+  FJ: 'Fiji',
+  FM: 'Micronesia',
+
+  FR: 'France',
+  GA: 'Gabon',
+  GB: 'United Kingdom',
+  GD: 'Grenada',
+  GE: 'Georgia',
+  GH: 'Ghana',
+  GM: 'Gambia',
+  GN: 'Guinea',
+  GQ: 'Equatorial Guinea',
+  GR: 'Greece',
+  GT: 'Guatemala',
+  GW: 'Guinea-Bissau',
+  GY: 'Guyana',
+
+  HK: 'Hong Kong',
+  HN: 'Honduras',
+  HR: 'Croatia',
+  HT: 'Haiti',
+  HU: 'Hungary',
+
+  ID: 'Indonesia',
+  IE: 'Ireland',
+  IL: 'Israel',
+  IN: 'India',
+  IQ: 'Iraq',
+  IS: 'Iceland',
+  IT: 'Italy',
+
+  JM: 'Jamaica',
+  JO: 'Jordan',
+  JP: 'Japan',
+
+  KE: 'Kenya',
+  KG: 'Kyrgyzstan',
+  KH: 'Cambodia',
+  KI: 'Kiribati',
+  KM: 'Comoros',
+  KN: 'Saint Kitts and Nevis',
+  KR: 'South Korea',
+  KW: 'Kuwait',
+  KZ: 'Kazakhstan',
+
+  LA: "Lao People's Democratic Republic",
+  LB: 'Lebanon',
+  LC: 'Saint Lucia',
+  LI: 'Liechtenstein',
+  LK: 'Sri Lanka',
+  LR: 'Liberia',
+  LS: 'Lesotho',
+  LT: 'Lithuania',
+  LU: 'Luxembourg',
+  LV: 'Latvia',
+  LY: 'Libya',
+
+  MA: 'Morocco',
+  MC: 'Monaco',
+  MD: 'Moldova',
+  ME: 'Montenegro',
+  MG: 'Madagascar',
+  MH: 'Marshall Islands',
+  MK: 'North Macedonia',
+  ML: 'Mali',
+  MN: 'Mongolia',
+  MO: 'Macao',
+  MR: 'Mauritania',
+  MT: 'Malta',
+  MU: 'Mauritius',
+  MV: 'Maldives',
+  MW: 'Malawi',
+  MX: 'Mexico',
+  MY: 'Malaysia',
+  MZ: 'Mozambique',
+
+  NA: 'Namibia',
+  NE: 'Niger',
+  NG: 'Nigeria',
+  NI: 'Nicaragua',
+  NL: 'Netherlands',
+  NO: 'Norway',
+  NP: 'Nepal',
+  NR: 'Nauru',
+  NZ: 'New Zealand',
+
+  OM: 'Oman',
+
+  PA: 'Panama',
+  PE: 'Peru',
+  PG: 'Papua New Guinea',
+  PH: 'Philippines',
+  PK: 'Pakistan',
+  PL: 'Poland',
+  PS: 'Palestine',
+  PT: 'Portugal',
+  PW: 'Palau',
+  PY: 'Paraguay',
+
+  QA: 'Qatar',
+
+  RO: 'Romania',
+  RS: 'Serbia',
+  RW: 'Rwanda',
+
+  SA: 'Saudi Arabia',
+  SB: 'Solomon Islands',
+  SC: 'Seychelles',
+  SE: 'Sweden',
+  SG: 'Singapore',
+  SI: 'Slovenia',
+  SK: 'Slovakia',
+  SL: 'Sierra Leone',
+  SM: 'San Marino',
+  SN: 'Senegal',
+  SR: 'Suriname',
+  ST: 'São Tomé and Príncipe',
+  SV: 'El Salvador',
+  SZ: 'Eswatini',
+
+  TD: 'Chad',
+  TG: 'Togo',
+  TH: 'Thailand',
+  TJ: 'Tajikistan',
+  TL: 'Timor-Leste',
+  TN: 'Tunisia',
+  TO: 'Tonga',
+  TR: 'Türkiye',
+  TT: 'Trinidad and Tobago',
+  TV: 'Tuvalu',
+  TZ: 'Tanzania',
+
+  UA: 'Ukraine',
+  UG: 'Uganda',
+  US: 'United States',
+  UY: 'Uruguay',
+  UZ: 'Uzbekistan',
+
+  VC: 'Saint Vincent and the Grenadines',
+  VE: 'Venezuela',
+  VN: 'Vietnam',
+  VU: 'Vanuatu',
+
+  WS: 'Samoa',
+
+  XK: 'Kosovo',
+
+  ZA: 'South Africa',
+  ZM: 'Zambia',
+  ZW: 'Zimbabwe'
+};
+
 // =====================
 // API: Song Stats
 // =====================
@@ -85,7 +300,11 @@ app.get('/api/song-stats', async (req, res) => {
     }
 
     // 1) Search for the track via spotify-auth
-    const searchUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/search?q=${encodeURIComponent(query)}`;
+    const searchUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/search` +
+      `?q=${encodeURIComponent(query)}` +
+      `&limit=1`;
+
     const searchRes = await fetch(searchUrl);
 
     if (!searchRes.ok) {
@@ -158,7 +377,10 @@ app.get('/api/album-analyzer', async (req, res) => {
     }
 
     // 1) Search for the album via spotify-auth (type=album)
-    const searchUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/search-albums?q=${encodeURIComponent(query)}`;
+    const searchUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/search-albums` +
+      `?q=${encodeURIComponent(query)}`;
+
     const searchRes = await fetch(searchUrl);
 
     if (!searchRes.ok) {
@@ -370,7 +592,11 @@ app.get('/api/song-similarity', async (req, res) => {
     }
 
     // 1) Resolve seed track
-    const searchUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/search?q=${encodeURIComponent(query)}`;
+    const searchUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/search` +
+      `?q=${encodeURIComponent(query)}` +
+      `&limit=1`;
+
     const searchRes = await fetch(searchUrl);
 
     if (!searchRes.ok) {
@@ -414,8 +640,10 @@ app.get('/api/song-similarity', async (req, res) => {
     };
 
     // 2) Fetch same-artist top tracks + related artists
-    const topTracksUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/top-tracks`;
-    const relatedArtistsUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/related-artists`;
+    const topTracksUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/top-tracks?market=US`;
+    const relatedArtistsUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/related-artists`;
 
     const [topRes, relatedRes] = await Promise.all([
       fetch(topTracksUrl),
@@ -441,7 +669,8 @@ app.get('/api/song-similarity', async (req, res) => {
     // For related artists, fetch top tracks for top 3 related artists (if any)
     const relatedTopPromises = relatedArtists.slice(0, 3).map(async (artist) => {
       if (!artist.id) return null;
-      const url = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artist.id}/top-tracks`;
+      const url =
+        `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artist.id}/top-tracks?market=US`;
       const r = await fetch(url);
       if (!r.ok) {
         const txt = await r.text();
@@ -461,7 +690,6 @@ app.get('/api/song-similarity', async (req, res) => {
     function addCandidate(track, opts) {
       if (!track || !track.id) return;
       if (track.id === seedTrack.id) return; // don't recommend exact same track
-
       if (candidatesMap.has(track.id)) return;
 
       const releaseDate = track.album?.release_date || null;
@@ -608,6 +836,105 @@ app.get('/api/song-similarity', async (req, res) => {
   }
 });
 
+// =====================
+// API: Trend Analytics
+// =====================
+// GET /api/trend-analytics?country=<marketCode>
+// Example: /api/trend-analytics?country=CA
+app.get('/api/trend-analytics', async (req, res) => {
+  try {
+    let code = (req.query.country || '').trim().toUpperCase();
+    if (!code) {
+      code = 'GLOBAL';
+    }
+
+    // Map to display label
+    const displayCountry = COUNTRY_LABELS[code] || code;
+
+    // Spotify market code to use
+    const market = code === 'GLOBAL' ? 'US' : code;
+
+    // Query string: tracks released from 2020 to 2025 (ish)
+    const q = 'year:2020-2025';
+
+    const searchUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/search` +
+      `?q=${encodeURIComponent(q)}` +
+      `&limit=50` +
+      `&market=${encodeURIComponent(market)}`;
+
+    const searchRes = await fetch(searchUrl);
+
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Trend Analytics: search error', searchRes.status, text);
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Failed to fetch tracks from Spotify' });
+    }
+
+    const data = await searchRes.json();
+    const items = data?.tracks?.items || [];
+
+    if (items.length === 0) {
+      return res.status(404).json({
+        error: 'No tracks found for this market / time window.'
+      });
+    }
+
+    // Sort by popularity descending and take top 10
+    const sorted = [...items].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    const top10 = sorted.slice(0, 10);
+
+    const topTracks = top10.map((track, idx) => {
+      const releaseDate = track.album?.release_date || '';
+      const releaseYear = releaseDate ? releaseDate.slice(0, 4) : null;
+      const durationMs = track.duration_ms ?? null;
+      const durationFormatted = durationMs != null ? formatDurationMs(durationMs) : null;
+
+      return {
+        rank: idx + 1,
+        trackName: track.name || 'Unknown track',
+        artistName: track.artists?.map(a => a.name).join(', ') || 'Unknown artist',
+        popularity: track.popularity ?? null,
+        releaseYear,
+        durationFormatted
+      };
+    });
+
+    // Summary stats
+    const popularityValues = topTracks
+      .map(t => t.popularity)
+      .filter(p => p != null);
+
+    const avgPopularity =
+      popularityValues.length > 0
+        ? popularityValues.reduce((sum, p) => sum + p, 0) / popularityValues.length
+        : null;
+
+    const yearValues = topTracks
+      .map(t => parseInt(t.releaseYear, 10))
+      .filter(y => !Number.isNaN(y));
+
+    const avgReleaseYear =
+      yearValues.length > 0
+        ? Math.round(yearValues.reduce((sum, y) => sum + y, 0) / yearValues.length)
+        : null;
+
+    res.json({
+      displayCountry,
+      market,
+      window: '2020-2025',
+      avgPopularity,
+      avgReleaseYear,
+      topTracks
+    });
+  } catch (err) {
+    console.error('Trend Analytics endpoint error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Spotify UI, Song Stats, Album Analyzer & Song Similarity service running at http://localhost:${PORT}`);
+  console.log(`Spotify UI, Song Stats, Album Analyzer, Song Similarity & Trend Analytics running at http://localhost:${PORT}`);
 });

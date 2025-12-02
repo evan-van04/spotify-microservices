@@ -23,41 +23,64 @@
   </header>
 
   <main>
+    <!-- SINGLE hero block -->
     <section class="hero">
-      <h1>Spotify Microservices Dashboard</h1>
-      <p>
-        Explore five independent microservices built on top of the Spotify Web API:
-        inspect a song’s stats, find similar tracks, analyze global trends, view user
-        listening habits, and summarize playlist vibes.
-      </p>
+      <h1 class="hero-title">
+        <span class="hero-track">Track</span><span class="hero-iq">IQ</span> Dashboard
+      </h1>
+
+      <div class="hero-meta">
+        <p>Evan Van • Mike Tran • Fiona Luo • Tina Tang</p>
+        <p>University of Western Ontario</p>
+        <p>CS4471 • Prof. Nazim</p>
+      </div>
     </section>
 
-    <section class="grid">
-      <div class="card">
+    <!-- SINGLE grid of 5 microservice cards -->
+    <section class="grid dashboard-grid">
+      <div class="card dashboard-card">
         <h2>Song Stats</h2>
-        <p>Inspect tempo, energy, valence, danceability, and acousticness for a single track and get an overall mood label.</p>
+        <p>
+          Inspect the artist(s), album name, popularity score, and many more metrics
+          of a song.
+        </p>
       </div>
-      <div class="card">
+
+      <div class="card dashboard-card">
         <h2>Song Similarity</h2>
-        <p>Provide a track and get recommended songs with similar audio characteristics and vibe.</p>
+        <p>
+          Provide a track and get recommended songs with similar audio characteristics
+          and vibe.
+        </p>
       </div>
-      <div class="card">
+
+      <div class="card dashboard-card">
         <h2>Trend Analytics</h2>
-        <p>Retrieve currently trending tracks with high popularity scores and inspect why they’re popping.</p>
+        <p>
+          Retrieve currently trending tracks with high popularity scores and inspect why
+          they’re popping.
+        </p>
       </div>
-      <div class="card">
+
+      <div class="card dashboard-card">
         <h2>Top Tracks</h2>
-        <p>View a user’s top tracks based on their listening history and habits.</p>
+        <p>
+          View a user’s top tracks based on their listening history and habits.
+        </p>
       </div>
-      <div class="card">
+
+      <div class="card dashboard-card">
         <h2>Album Analyzer</h2>
-        <p>Paste a album and get an overall profile: average tempo, mood, energy and vibe labels.</p>
+        <p>
+          Search an album and get its overall statistics and tracks
+          ranked by popularity.
+        </p>
       </div>
     </section>
   </main>
 
   <footer>
-    TrackIQ · Local demo
+    TrackIQ · Dashboard
   </footer>
 </body>
 </html>

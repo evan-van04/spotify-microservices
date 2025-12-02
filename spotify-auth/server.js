@@ -1,3 +1,5 @@
+// 8081 server.js  --- spotify-auth
+
 const express = require('express');
 
 // node-fetch v3 in CommonJS (Node 22) – dynamic import wrapper
@@ -130,8 +132,8 @@ app.get('/spotify/tracks/:trackId', async (req, res) => {
   }
 });
 
-// Proxy: search for a track by name (or query string)
-// GET /spotify/search?q=mr brightside
+// Proxy: search for a track by name (or generic query string)
+// GET /spotify/search?q=<query>&limit=50&market=CA
 app.get('/spotify/search', async (req, res) => {
   try {
     const q = req.query.q;
@@ -139,9 +141,22 @@ app.get('/spotify/search', async (req, res) => {
       return res.status(400).json({ error: 'Missing q query parameter' });
     }
 
+    const limitParam = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 50
+      ? limitParam
+      : 1; // default 1 for Song Stats etc.
+
+    const market = req.query.market || 'US';
+
     const token = await getSpotifyAppToken();
 
-    const url = `https://api.spotify.com/v1/search?type=track&limit=1&q=${encodeURIComponent(q)}`;
+    const url =
+      `https://api.spotify.com/v1/search` +
+      `?type=track` +
+      `&limit=${limit}` +
+      `&market=${encodeURIComponent(market)}` +
+      `&q=${encodeURIComponent(q)}`;
+
     const searchRes = await fetch(url, {
       method: 'GET',
       headers: {
@@ -163,7 +178,7 @@ app.get('/spotify/search', async (req, res) => {
   }
 });
 
-// Search playlists by name (kept for future)
+// Search playlists by name (kept for completeness – no longer used by Trend Analytics)
 app.get('/spotify/search-playlists', async (req, res) => {
   try {
     const q = req.query.q;
@@ -171,8 +186,14 @@ app.get('/spotify/search-playlists', async (req, res) => {
       return res.status(400).json({ error: 'Missing q query parameter' });
     }
 
+    // allow caller to request more than 1 result (default 10)
+    const limitParam = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 50
+      ? limitParam
+      : 10;
+
     const token = await getSpotifyAppToken();
-    const url = `https://api.spotify.com/v1/search?type=playlist&limit=1&q=${encodeURIComponent(q)}`;
+    const url = `https://api.spotify.com/v1/search?type=playlist&limit=${limit}&q=${encodeURIComponent(q)}`;
 
     const searchRes = await fetch(url, {
       method: 'GET',
@@ -197,7 +218,7 @@ app.get('/spotify/search-playlists', async (req, res) => {
   }
 });
 
-// Get playlist details (kept for future)
+// Get playlist details (kept for completeness; editorial charts may 404 in dev apps)
 // GET /spotify/playlists/:playlistId
 app.get('/spotify/playlists/:playlistId', async (req, res) => {
   try {
@@ -301,7 +322,9 @@ app.get('/spotify/artists/:artistId/top-tracks', async (req, res) => {
     const artistId = req.params.artistId;
     const token = await getSpotifyAppToken();
 
-    const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`;
+    const market = req.query.market || 'US';
+
+    const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=${encodeURIComponent(market)}`;
     const topRes = await fetch(url, {
       method: 'GET',
       headers: {
@@ -325,8 +348,7 @@ app.get('/spotify/artists/:artistId/top-tracks', async (req, res) => {
   }
 });
 
-// NEW: Related artists
-// GET /spotify/artists/:artistId/related-artists
+// NEW: Related artists (NOTE: may be restricted for dev apps)
 app.get('/spotify/artists/:artistId/related-artists', async (req, res) => {
   try {
     const artistId = req.params.artistId;

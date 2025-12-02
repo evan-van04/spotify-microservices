@@ -24,22 +24,370 @@
   <main>
     <h1 class="page-title">Trend Analytics</h1>
     <p class="page-subtitle">
-      “What songs are globally popular right now?” – Retrieve and inspect tracks with high
-      popularity scores (e.g., &gt; 90).
+      “What’s trending in this country right now?” – Pick a country and TrackIQ
+      surfaces stats for the top tracks from Spotify’s official Top 50 playlist.
     </p>
 
-    <div class="placeholder-box">
-      UI placeholder for Trend Analytics microservice.<br><br>
-      Later you can add:
-      <ul>
-        <li>A button to fetch trending tracks</li>
-        <li>A table or cards showing song name, artist, and popularity</li>
-      </ul>
+    <div class="card trend-card">
+      <form id="trendForm" class="trend-form">
+        <select id="countryInput">
+            <option value="" disabled selected>Select a Country</option>
+            <option value="GLOBAL">Global</option>
+
+  <option value="AL">Albania</option>
+  <option value="DZ">Algeria</option>
+  <option value="AD">Andorra</option>
+  <option value="AO">Angola</option>
+  <option value="AG">Antigua and Barbuda</option>
+  <option value="AR">Argentina</option>
+  <option value="AM">Armenia</option>
+  <option value="AU">Australia</option>
+  <option value="AT">Austria</option>
+  <option value="AZ">Azerbaijan</option>
+
+  <option value="BS">Bahamas</option>
+  <option value="BH">Bahrain</option>
+  <option value="BD">Bangladesh</option>
+  <option value="BB">Barbados</option>
+  <option value="BY">Belarus</option>
+  <option value="BE">Belgium</option>
+  <option value="BZ">Belize</option>
+  <option value="BJ">Benin</option>
+  <option value="BT">Bhutan</option>
+  <option value="BO">Bolivia</option>
+  <option value="BA">Bosnia and Herzegovina</option>
+  <option value="BW">Botswana</option>
+  <option value="BR">Brazil</option>
+  <option value="BN">Brunei Darussalam</option>
+  <option value="BG">Bulgaria</option>
+  <option value="BF">Burkina Faso</option>
+  <option value="BI">Burundi</option>
+
+  <option value="CV">Cabo Verde</option>
+  <option value="KH">Cambodia</option>
+  <option value="CM">Cameroon</option>
+  <option value="CA">Canada</option>
+  <option value="CF">Central African Republic</option> <!-- If missing, ignore -->
+  <option value="TD">Chad</option>
+  <option value="CL">Chile</option>
+  <option value="CN">China</option> <!-- If missing, ignore -->
+  <option value="CO">Colombia</option>
+  <option value="KM">Comoros</option>
+  <option value="CG">Congo - Brazzaville</option>
+  <option value="CD">Congo - Kinshasa</option>
+  <option value="CR">Costa Rica</option>
+  <option value="CI">Côte d’Ivoire</option>
+  <option value="HR">Croatia</option>
+  <option value="CU">Cuba</option> <!-- If missing, ignore -->
+  <option value="CY">Cyprus</option>
+  <option value="CZ">Czech Republic</option>
+
+  <option value="DK">Denmark</option>
+  <option value="DJ">Djibouti</option>
+  <option value="DM">Dominica</option>
+  <option value="DO">Dominican Republic</option>
+
+  <option value="EC">Ecuador</option>
+  <option value="EG">Egypt</option>
+  <option value="SV">El Salvador</option>
+  <option value="GQ">Equatorial Guinea</option>
+  <option value="ER">Eritrea</option> <!-- If missing, ignore -->
+  <option value="EE">Estonia</option>
+  <option value="SZ">Eswatini</option>
+  <option value="ET">Ethiopia</option>
+
+  <option value="FJ">Fiji</option>
+  <option value="FI">Finland</option>
+  <option value="FR">France</option>
+  <option value="FM">Micronesia</option>
+
+  <option value="GA">Gabon</option>
+  <option value="GM">Gambia</option>
+  <option value="GE">Georgia</option>
+  <option value="DE">Germany</option>
+  <option value="GH">Ghana</option>
+  <option value="GR">Greece</option>
+  <option value="GD">Grenada</option>
+  <option value="GT">Guatemala</option>
+  <option value="GN">Guinea</option>
+  <option value="GW">Guinea-Bissau</option>
+  <option value="GY">Guyana</option>
+
+  <option value="HT">Haiti</option>
+  <option value="HN">Honduras</option>
+  <option value="HK">Hong Kong</option>
+  <option value="HU">Hungary</option>
+
+  <option value="IS">Iceland</option>
+  <option value="IN">India</option>
+  <option value="ID">Indonesia</option>
+  <option value="IR">Iran</option> <!-- If missing, ignore -->
+  <option value="IQ">Iraq</option>
+  <option value="IE">Ireland</option>
+  <option value="IL">Israel</option>
+  <option value="IT">Italy</option>
+
+  <option value="JM">Jamaica</option>
+  <option value="JP">Japan</option>
+  <option value="JO">Jordan</option>
+
+  <option value="KZ">Kazakhstan</option>
+  <option value="KE">Kenya</option>
+  <option value="KI">Kiribati</option>
+  <option value="XK">Kosovo</option>
+  <option value="KW">Kuwait</option>
+  <option value="KG">Kyrgyzstan</option>
+
+  <option value="LA">Lao People's Democratic Republic</option>
+  <option value="LV">Latvia</option>
+  <option value="LB">Lebanon</option>
+  <option value="LS">Lesotho</option>
+  <option value="LR">Liberia</option>
+  <option value="LY">Libya</option>
+  <option value="LI">Liechtenstein</option>
+  <option value="LT">Lithuania</option>
+  <option value="LU">Luxembourg</option>
+
+  <option value="MO">Macao</option>
+  <option value="MG">Madagascar</option>
+  <option value="MW">Malawi</option>
+  <option value="MY">Malaysia</option>
+  <option value="MV">Maldives</option>
+  <option value="ML">Mali</option>
+  <option value="MT">Malta</option>
+  <option value="MH">Marshall Islands</option>
+  <option value="MR">Mauritania</option>
+  <option value="MU">Mauritius</option>
+  <option value="MX">Mexico</option>
+  <option value="MC">Monaco</option>
+  <option value="MN">Mongolia</option>
+  <option value="ME">Montenegro</option>
+  <option value="MA">Morocco</option>
+  <option value="MZ">Mozambique</option>
+
+  <option value="MM">Myanmar</option> <!-- If missing, ignore -->
+  <option value="NA">Namibia</option>
+  <option value="NR">Nauru</option>
+  <option value="NP">Nepal</option>
+  <option value="NL">Netherlands</option>
+  <option value="NZ">New Zealand</option>
+  <option value="NI">Nicaragua</option>
+  <option value="NE">Niger</option>
+  <option value="NG">Nigeria</option>
+  <option value="KP">North Korea</option> <!-- If missing, ignore -->
+  <option value="MK">North Macedonia</option>
+  <option value="NO">Norway</option>
+
+  <option value="OM">Oman</option>
+
+  <option value="PK">Pakistan</option>
+  <option value="PW">Palau</option>
+  <option value="PS">Palestine</option>
+  <option value="PA">Panama</option>
+  <option value="PG">Papua New Guinea</option>
+  <option value="PY">Paraguay</option>
+  <option value="PE">Peru</option>
+  <option value="PH">Philippines</option>
+  <option value="PL">Poland</option>
+  <option value="PT">Portugal</option>
+
+  <option value="QA">Qatar</option>
+
+  <option value="RO">Romania</option>
+  <option value="RU">Russia</option> <!-- If missing, ignore -->
+  <option value="RW">Rwanda</option>
+
+  <option value="KN">Saint Kitts and Nevis</option>
+  <option value="LC">Saint Lucia</option>
+  <option value="VC">Saint Vincent and the Grenadines</option>
+  <option value="WS">Samoa</option>
+  <option value="SM">San Marino</option>
+  <option value="ST">São Tomé and Príncipe</option>
+  <option value="SA">Saudi Arabia</option>
+  <option value="SN">Senegal</option>
+  <option value="RS">Serbia</option>
+  <option value="SC">Seychelles</option>
+  <option value="SL">Sierra Leone</option>
+  <option value="SG">Singapore</option>
+  <option value="SK">Slovakia</option>
+  <option value="SI">Slovenia</option>
+  <option value="SB">Solomon Islands</option>
+  <option value="SO">Somalia</option> <!-- If missing, ignore -->
+  <option value="ZA">South Africa</option>
+  <option value="KR">South Korea</option>
+  <option value="SS">South Sudan</option> <!-- If missing, ignore -->
+  <option value="ES">Spain</option>
+  <option value="LK">Sri Lanka</option>
+  <option value="SD">Sudan</option> <!-- If missing, ignore -->
+  <option value="SR">Suriname</option>
+  <option value="SE">Sweden</option>
+  <option value="CH">Switzerland</option>
+  <option value="SY">Syria</option> <!-- If missing, ignore -->
+
+  <option value="TW">Taiwan</option> <!-- If missing, ignore -->
+  <option value="TJ">Tajikistan</option>
+  <option value="TZ">Tanzania</option>
+  <option value="TH">Thailand</option>
+  <option value="TL">Timor-Leste</option>
+  <option value="TG">Togo</option>
+  <option value="TO">Tonga</option>
+  <option value="TT">Trinidad and Tobago</option>
+  <option value="TN">Tunisia</option>
+  <option value="TR">Türkiye</option>
+  <option value="TM">Turkmenistan</option> <!-- If missing, ignore -->
+  <option value="TV">Tuvalu</option>
+
+  <option value="UG">Uganda</option>
+  <option value="UA">Ukraine</option>
+  <option value="AE">United Arab Emirates</option>
+  <option value="GB">United Kingdom</option>
+  <option value="US">United States</option>
+  <option value="UY">Uruguay</option>
+  <option value="UZ">Uzbekistan</option>
+
+  <option value="VU">Vanuatu</option>
+  <option value="VE">Venezuela</option>
+  <option value="VN">Vietnam</option>
+
+  <option value="YE">Yemen</option> <!-- If missing, ignore -->
+  <option value="ZM">Zambia</option>
+  <option value="ZW">Zimbabwe</option>
+</select>
+
+        <button type="submit">Analyze Trends</button>
+        <p class="helper-text">
+          We map your selection to Spotify’s official “Top 50” country playlist, then show
+          the 10 most popular tracks plus basic stats.
+        </p>
+      </form>
+
+      <div id="trendLoading" style="display:none; margin-top: 1rem;">
+        Analyzing trends…
+      </div>
+
+      <div id="trendError" style="display:none; margin-top: 1rem; color: #dc2626;">
+      </div>
+
+      <div id="trendResult" class="trend-result" style="display:none; margin-top: 1.5rem;">
+        <h2 id="trendCountryTitle" class="tracks-title"></h2>
+
+        <div id="trendSummary" class="trend-summary"></div>
+
+        <div class="tracks-section">
+          <h3 class="tracks-title">Top 10 tracks</h3>
+          <div class="table-wrapper">
+            <table class="tracks-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Track</th>
+                  <th>Artist(s)</th>
+                  <th>Popularity</th>
+                  <th>Year</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="trendTracksBody">
+                <!-- rows injected by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
   <footer>
     TrackIQ · Trend Analytics
   </footer>
+
+  <script>
+    const trendForm = document.getElementById('trendForm');
+    const countryInput = document.getElementById('countryInput');
+    const trendLoadingEl = document.getElementById('trendLoading');
+    const trendErrorEl = document.getElementById('trendError');
+    const trendResultEl = document.getElementById('trendResult');
+    const trendCountryTitleEl = document.getElementById('trendCountryTitle');
+    const trendSummaryEl = document.getElementById('trendSummary');
+    const trendTracksBodyEl = document.getElementById('trendTracksBody');
+
+    trendForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const country = countryInput.value;
+      if (!country) return;
+
+      trendErrorEl.style.display = 'none';
+      trendErrorEl.textContent = '';
+      trendResultEl.style.display = 'none';
+      trendLoadingEl.style.display = 'block';
+
+      try {
+        const res = await fetch(
+          `/api/trend-analytics?country=${encodeURIComponent(country)}`
+        );
+        const data = await res.json();
+
+        trendLoadingEl.style.display = 'none';
+
+        if (!res.ok) {
+          trendErrorEl.style.display = 'block';
+          trendErrorEl.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+
+        const displayCountry = data.displayCountry || countryCode;
+        trendCountryTitleEl.textContent = `Top tracks – ${displayCountry}`;
+
+        const summaryParts = [];
+        if (data.playlistName) summaryParts.push(`Source playlist: ${data.playlistName}`);
+        if (data.avgPopularity != null)
+          summaryParts.push(`Avg popularity: ${data.avgPopularity.toFixed(1)} / 100`);
+        if (data.avgReleaseYear != null)
+          summaryParts.push(`Avg release year: ${data.avgReleaseYear}`);
+
+        trendSummaryEl.textContent = summaryParts.join(' · ');
+
+        // Build table rows
+        trendTracksBodyEl.innerHTML = '';
+        (data.topTracks || []).forEach((track) => {
+          const tr = document.createElement('tr');
+
+          const rankTd = document.createElement('td');
+          rankTd.textContent = track.rank ?? '';
+
+          const titleTd = document.createElement('td');
+          titleTd.textContent = track.trackName || 'Unknown track';
+
+          const artistTd = document.createElement('td');
+          artistTd.textContent = track.artistName || 'Unknown artist';
+
+          const popTd = document.createElement('td');
+          popTd.textContent =
+            track.popularity != null ? `${track.popularity} / 100` : '—';
+
+          const yearTd = document.createElement('td');
+          yearTd.textContent = track.releaseYear || '—';
+
+          const durTd = document.createElement('td');
+          durTd.textContent = track.durationFormatted || '—';
+
+          tr.appendChild(rankTd);
+          tr.appendChild(titleTd);
+          tr.appendChild(artistTd);
+          tr.appendChild(popTd);
+          tr.appendChild(yearTd);
+          tr.appendChild(durTd);
+
+          trendTracksBodyEl.appendChild(tr);
+        });
+
+        trendResultEl.style.display = 'block';
+      } catch (err) {
+        trendLoadingEl.style.display = 'none';
+        trendErrorEl.style.display = 'block';
+        trendErrorEl.textContent = 'Request failed: ' + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
