@@ -1,0 +1,144 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  background: #0b0c10;
+  color: #f5f5f5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: #14171f;
+  border-bottom: 1px solid #232633;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.brand span {
+  color: #f97316;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 0.75rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: #cbd5f5;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+nav a:hover {
+  background: #1f2933;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+nav a.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.hero {
+  margin-top: 3rem;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.05rem;
+  color: #cbd5f5;
+  max-width: 600px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.card {
+  background: #111827;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #1f2937;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: #cbd5f5;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 0.98rem;
+  color: #cbd5f5;
+  margin-bottom: 2rem;
+}
+
+.placeholder-box {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px dashed #374151;
+  background: #020617;
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
+
+footer {
+  padding: 1rem 2rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  border-top: 1px solid #232633;
+  text-align: center;
+}
