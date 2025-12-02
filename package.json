@@ -4,10 +4,17 @@
   "description": "Frontend + backend server for KYN Spotify Microservices",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start:auth": "node spotify-auth/server.js",
+    "start:main": "node server.js",
+    "start": "concurrently --kill-others-on-fail \"npm run start:auth\" \"npm run start:main\""
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^4.22.1",
     "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
   }
+  
 }
