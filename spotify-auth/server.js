@@ -218,37 +218,6 @@ app.get('/spotify/search-playlists', async (req, res) => {
   }
 });
 
-// Get playlist details (kept for completeness; editorial charts may 404 in dev apps)
-// GET /spotify/playlists/:playlistId
-app.get('/spotify/playlists/:playlistId', async (req, res) => {
-  try {
-    const playlistId = req.params.playlistId;
-    const token = await getSpotifyAppToken();
-
-    const url = `https://api.spotify.com/v1/playlists/${playlistId}?market=US&limit=100`;
-    const playlistRes = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!playlistRes.ok) {
-      const text = await playlistRes.text();
-      console.error('Spotify playlist details error:', text);
-      return res
-        .status(playlistRes.status)
-        .json({ error: 'Spotify playlist details failed', raw: text });
-    }
-
-    const data = await playlistRes.json();
-    res.json(data);
-  } catch (err) {
-    console.error('Proxy playlists error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // NEW: Search albums by name
 // GET /spotify/search-albums?q=After%20Hours
 app.get('/spotify/search-albums', async (req, res) => {
@@ -284,33 +253,118 @@ app.get('/spotify/search-albums', async (req, res) => {
   }
 });
 
-// NEW: Get album details (including tracks)
-// GET /spotify/albums/:albumId
-app.get('/spotify/albums/:albumId', async (req, res) => {
+// NEW: Search artists by name
+// GET /spotify/search-artists?q=Drake
+app.get('/spotify/search-artists', async (req, res) => {
   try {
-    const albumId = req.params.albumId;
-    const token = await getSpotifyAppToken();
+    const q = req.query.q;
+    if (!q) {
+      return res.status(400).json({ error: 'Missing q query parameter' });
+    }
 
-    const url = `https://api.spotify.com/v1/albums/${albumId}?market=US`;
-    const albumRes = await fetch(url, {
+    const limitParam = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 50
+      ? limitParam
+      : 1;
+
+    const token = await getSpotifyAppToken();
+    const url =
+      `https://api.spotify.com/v1/search` +
+      `?type=artist` +
+      `&limit=${limit}` +
+      `&q=${encodeURIComponent(q)}`;
+
+    const searchRes = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
 
-    if (!albumRes.ok) {
-      const text = await albumRes.text();
-      console.error('Spotify album details error:', text);
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Spotify artist search error:', text);
       return res
-        .status(albumRes.status)
-        .json({ error: 'Spotify album details failed', raw: text });
+        .status(searchRes.status)
+        .json({ error: 'Spotify artist search failed', raw: text });
     }
 
-    const data = await albumRes.json();
+    const data = await searchRes.json();
     res.json(data);
   } catch (err) {
-    console.error('Proxy albums error:', err);
+    console.error('Proxy search-artists error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// NEW: Get artist details by ID
+// GET /spotify/artists/:artistId
+app.get('/spotify/artists/:artistId', async (req, res) => {
+  try {
+    const artistId = req.params.artistId;
+    const token = await getSpotifyAppToken();
+
+    const url = `https://api.spotify.com/v1/artists/${artistId}`;
+    const artistRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!artistRes.ok) {
+      const text = await artistRes.text();
+      console.error('Spotify artist details error:', text);
+      return res
+        .status(artistRes.status)
+        .json({ error: 'Spotify artist details failed', raw: text });
+    }
+
+    const data = await artistRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy artist details error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// NEW: Artist's albums (albums + singles)
+// GET /spotify/artists/:artistId/albums?include_groups=album,single&limit=50
+app.get('/spotify/artists/:artistId/albums', async (req, res) => {
+  try {
+    const artistId = req.params.artistId;
+    const token = await getSpotifyAppToken();
+
+    const includeGroups = req.query.include_groups || 'album,single';
+    const limitParam = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 50
+      ? limitParam
+      : 50;
+
+    const url =
+      `https://api.spotify.com/v1/artists/${artistId}/albums` +
+      `?include_groups=${encodeURIComponent(includeGroups)}` +
+      `&limit=${limit}`;
+
+    const albumsRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!albumsRes.ok) {
+      const text = await albumsRes.text();
+      console.error('Spotify artist albums error:', text);
+      return res
+        .status(albumsRes.status)
+        .json({ error: 'Spotify artist albums failed', raw: text });
+    }
+
+    const data = await albumsRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy artist albums error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

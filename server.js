@@ -31,7 +31,12 @@ app.get('/health', (req, res) => {
 function computeMoodLabel(features) {
   const { energy, danceability, valence, acousticness } = features;
 
-  if (energy == null || danceability == null || valence == null || acousticness == null) {
+  if (
+    energy == null ||
+    danceability == null ||
+    valence == null ||
+    acousticness == null
+  ) {
     return 'mood unavailable (no audio features)';
   }
 
@@ -310,7 +315,9 @@ app.get('/api/song-stats', async (req, res) => {
     if (!searchRes.ok) {
       const text = await searchRes.text();
       console.error('Song Stats: search error:', text);
-      return res.status(searchRes.status).json({ error: 'Failed to search track' });
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Failed to search track' });
     }
 
     const searchData = await searchRes.json();
@@ -341,7 +348,8 @@ app.get('/api/song-stats', async (req, res) => {
     const result = {
       trackId: fullTrack.id,
       trackName: fullTrack.name,
-      artistName: fullTrack.artists?.map(a => a.name).join(', ') || null,
+      artistName:
+        fullTrack.artists?.map((a) => a.name).join(', ') || null,
       albumName: fullTrack.album?.name || null,
       albumImage: fullTrack.album?.images?.[0]?.url || null,
       popularity,
@@ -386,7 +394,9 @@ app.get('/api/album-analyzer', async (req, res) => {
     if (!searchRes.ok) {
       const text = await searchRes.text();
       console.error('Album Analyzer: album search error:', text);
-      return res.status(searchRes.status).json({ error: 'Failed to search album' });
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Failed to search album' });
     }
 
     const searchData = await searchRes.json();
@@ -405,15 +415,17 @@ app.get('/api/album-analyzer', async (req, res) => {
     if (!albumRes.ok) {
       const text = await albumRes.text();
       console.error('Album Analyzer: album details error:', text);
-      return res.status(albumRes.status).json({ error: 'Failed to fetch album details' });
+      return res
+        .status(albumRes.status)
+        .json({ error: 'Failed to fetch album details' });
     }
 
     const albumFull = await albumRes.json();
 
     const albumName = albumFull.name || album.name || null;
     const artists =
-      albumFull.artists?.map(a => a.name).join(', ') ||
-      album.artists?.map(a => a.name).join(', ') ||
+      albumFull.artists?.map((a) => a.name).join(', ') ||
+      album.artists?.map((a) => a.name).join(', ') ||
       null;
     const releaseDate = albumFull.release_date || album.release_date || null;
     const releaseYear = releaseDate ? releaseDate.slice(0, 4) : null;
@@ -429,7 +441,7 @@ app.get('/api/album-analyzer', async (req, res) => {
 
     // 3) For each track, fetch full track details to get popularity
     const fullTrackPromises = tracks
-      .filter(t => t && t.id)
+      .filter((t) => t && t.id)
       .map(async (t) => {
         const trackId = t.id;
         const trackUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/tracks/${trackId}`;
@@ -437,7 +449,10 @@ app.get('/api/album-analyzer', async (req, res) => {
 
         if (!trackRes.ok) {
           const text = await trackRes.text();
-          console.error(`Album Analyzer: track details error for ${trackId}:`, text);
+          console.error(
+            `Album Analyzer: track details error for ${trackId}:`,
+            text
+          );
           return null;
         }
 
@@ -453,13 +468,15 @@ app.get('/api/album-analyzer', async (req, res) => {
 
       const name = full.name || simplified.name || 'Unknown track';
       const artistName =
-        full.artists?.map(a => a.name).join(', ') ||
-        simplified.artists?.map(a => a.name).join(', ') ||
+        full.artists?.map((a) => a.name).join(', ') ||
+        simplified.artists?.map((a) => a.name).join(', ') ||
         'Unknown';
       const popularity = full.popularity ?? null;
 
-      const durationMs = full.duration_ms ?? simplified.duration_ms ?? null;
-      const durationFormatted = durationMs != null ? formatDurationMs(durationMs) : null;
+      const durationMs =
+        full.duration_ms ?? simplified.duration_ms ?? null;
+      const durationFormatted =
+        durationMs != null ? formatDurationMs(durationMs) : null;
 
       const discNumber = full.disc_number ?? simplified.disc_number ?? null;
       const trackNumber = full.track_number ?? simplified.track_number ?? null;
@@ -483,7 +500,9 @@ app.get('/api/album-analyzer', async (req, res) => {
 
     const totalTracks = trackRows.length;
     const avgPopularity =
-      popularityValues.length > 0 ? popularitySum / popularityValues.length : null;
+      popularityValues.length > 0
+        ? popularitySum / popularityValues.length
+        : null;
 
     let medianPopularity = null;
     if (popularityValues.length > 0) {
@@ -567,7 +586,7 @@ function computeSimilarityScore(seed, candidate, flags) {
   }
 
   if (durationDiffSec != null) {
-    const durationPenalty = Math.min(durationDiffSec / 15 * 0.5, 3);
+    const durationPenalty = Math.min((durationDiffSec / 15) * 0.5, 3);
     score -= durationPenalty;
   }
 
@@ -602,7 +621,9 @@ app.get('/api/song-similarity', async (req, res) => {
     if (!searchRes.ok) {
       const text = await searchRes.text();
       console.error('Song Similarity: search error:', text);
-      return res.status(searchRes.status).json({ error: 'Failed to search track' });
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Failed to search track' });
     }
 
     const searchData = await searchRes.json();
@@ -617,11 +638,16 @@ app.get('/api/song-similarity', async (req, res) => {
     const seedArtistId = seedArtist?.id;
 
     if (!seedArtistId) {
-      return res.status(400).json({ error: 'Seed track has no primary artist; cannot compute similarity.' });
+      return res.status(400).json({
+        error:
+          'Seed track has no primary artist; cannot compute similarity.'
+      });
     }
 
     const seedReleaseDate = seedTrack.album?.release_date || null;
-    const seedReleaseYear = seedReleaseDate ? parseInt(seedReleaseDate.slice(0, 4), 10) : null;
+    const seedReleaseYear = seedReleaseDate
+      ? parseInt(seedReleaseDate.slice(0, 4), 10)
+      : null;
     const seedDurationMs = seedTrack.duration_ms ?? null;
     const seedPopularity = seedTrack.popularity ?? null;
     const seedExplicit = !!seedTrack.explicit;
@@ -629,7 +655,8 @@ app.get('/api/song-similarity', async (req, res) => {
     const baseSeed = {
       trackId: seedTrack.id,
       trackName: seedTrack.name,
-      artistName: seedTrack.artists?.map(a => a.name).join(', ') || null,
+      artistName:
+        seedTrack.artists?.map((a) => a.name).join(', ') || null,
       albumName: seedTrack.album?.name || null,
       albumImage: seedTrack.album?.images?.[0]?.url || null,
       popularity: seedPopularity,
@@ -674,7 +701,10 @@ app.get('/api/song-similarity', async (req, res) => {
       const r = await fetch(url);
       if (!r.ok) {
         const txt = await r.text();
-        console.error(`Song Similarity: related artist top-tracks error for ${artist.id}:`, txt);
+        console.error(
+          `Song Similarity: related artist top-tracks error for ${artist.id}:`,
+          txt
+        );
         return null;
       }
       const data = await r.json();
@@ -693,7 +723,9 @@ app.get('/api/song-similarity', async (req, res) => {
       if (candidatesMap.has(track.id)) return;
 
       const releaseDate = track.album?.release_date || null;
-      const releaseYear = releaseDate ? parseInt(releaseDate.slice(0, 4), 10) : null;
+      const releaseYear = releaseDate
+        ? parseInt(releaseDate.slice(0, 4), 10)
+        : null;
       const durationMs = track.duration_ms ?? null;
       const popularity = track.popularity ?? null;
       const explicit = !!track.explicit;
@@ -783,8 +815,10 @@ app.get('/api/song-similarity', async (req, res) => {
       else if (meta.isFromRelatedArtist) reasons.push('related artist');
 
       if (yearDiff != null && yearDiff <= 2) reasons.push('similar era');
-      if (popularityDiff != null && popularityDiff <= 10) reasons.push('similar popularity');
-      if (durationDiffSec != null && durationDiffSec <= 20) reasons.push('similar length');
+      if (popularityDiff != null && popularityDiff <= 10)
+        reasons.push('similar popularity');
+      if (durationDiffSec != null && durationDiffSec <= 20)
+        reasons.push('similar length');
 
       const reasonSummary = reasons.length
         ? reasons.join(' · ')
@@ -814,7 +848,8 @@ app.get('/api/song-similarity', async (req, res) => {
         rank: idx + 1,
         trackId: t.id,
         trackName: t.name,
-        artistName: t.artists?.map(a => a.name).join(', ') || 'Unknown artist',
+        artistName:
+          t.artists?.map((a) => a.name).join(', ') || 'Unknown artist',
         albumName: t.album?.name || 'Unknown album',
         albumImage: t.album?.images?.[0]?.url || null,
         popularity: m.popularity,
@@ -883,19 +918,23 @@ app.get('/api/trend-analytics', async (req, res) => {
     }
 
     // Sort by popularity descending and take top 10
-    const sorted = [...items].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    const sorted = [...items].sort(
+      (a, b) => (b.popularity || 0) - (a.popularity || 0)
+    );
     const top10 = sorted.slice(0, 10);
 
     const topTracks = top10.map((track, idx) => {
       const releaseDate = track.album?.release_date || '';
       const releaseYear = releaseDate ? releaseDate.slice(0, 4) : null;
       const durationMs = track.duration_ms ?? null;
-      const durationFormatted = durationMs != null ? formatDurationMs(durationMs) : null;
+      const durationFormatted =
+        durationMs != null ? formatDurationMs(durationMs) : null;
 
       return {
         rank: idx + 1,
         trackName: track.name || 'Unknown track',
-        artistName: track.artists?.map(a => a.name).join(', ') || 'Unknown artist',
+        artistName:
+          track.artists?.map((a) => a.name).join(', ') || 'Unknown artist',
         popularity: track.popularity ?? null,
         releaseYear,
         durationFormatted
@@ -904,21 +943,24 @@ app.get('/api/trend-analytics', async (req, res) => {
 
     // Summary stats
     const popularityValues = topTracks
-      .map(t => t.popularity)
-      .filter(p => p != null);
+      .map((t) => t.popularity)
+      .filter((p) => p != null);
 
     const avgPopularity =
       popularityValues.length > 0
-        ? popularityValues.reduce((sum, p) => sum + p, 0) / popularityValues.length
+        ? popularityValues.reduce((sum, p) => sum + p, 0) /
+          popularityValues.length
         : null;
 
     const yearValues = topTracks
-      .map(t => parseInt(t.releaseYear, 10))
-      .filter(y => !Number.isNaN(y));
+      .map((t) => parseInt(t.releaseYear, 10))
+      .filter((y) => !Number.isNaN(y));
 
     const avgReleaseYear =
       yearValues.length > 0
-        ? Math.round(yearValues.reduce((sum, y) => sum + y, 0) / yearValues.length)
+        ? Math.round(
+            yearValues.reduce((sum, y) => sum + y, 0) / yearValues.length
+          )
         : null;
 
     res.json({
@@ -935,6 +977,133 @@ app.get('/api/trend-analytics', async (req, res) => {
   }
 });
 
+// =====================
+// API: Artist Stats
+// =====================
+// GET /api/artist-stats?q=<artist name or query>
+app.get('/api/artist-stats', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({
+        error: 'Missing q query parameter (artist name or query)'
+      });
+    }
+
+    // 1) Search for the artist via spotify-auth
+    const searchUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/search-artists` +
+      `?q=${encodeURIComponent(query)}` +
+      `&limit=1`;
+
+    const searchRes = await fetch(searchUrl);
+
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Artist Stats: artist search error:', text);
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Failed to search artist' });
+    }
+
+    const searchData = await searchRes.json();
+    const artists = searchData?.artists?.items || [];
+    if (artists.length === 0) {
+      return res.status(404).json({ error: 'No artist found for that query' });
+    }
+
+    const artist = artists[0];
+    const artistId = artist.id;
+
+    // 2) Fetch full artist details
+    const artistUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artistId}`;
+    const artistRes = await fetch(artistUrl);
+
+    if (!artistRes.ok) {
+      const text = await artistRes.text();
+      console.error('Artist Stats: artist details error:', text);
+      return res
+        .status(artistRes.status)
+        .json({ error: 'Failed to fetch artist details' });
+    }
+
+    const artistFull = await artistRes.json();
+
+    // 3) Fetch albums (albums + singles) to get a count
+    const albumsUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artistId}/albums` +
+      `?include_groups=album,single&limit=50`;
+    const albumsRes = await fetch(albumsUrl);
+
+    let albumCount = null;
+    if (albumsRes.ok) {
+      const albumsData = await albumsRes.json();
+      if (typeof albumsData.total === 'number') {
+        albumCount = albumsData.total;
+      } else if (Array.isArray(albumsData.items)) {
+        albumCount = albumsData.items.length;
+      }
+    } else {
+      const text = await albumsRes.text();
+      console.error('Artist Stats: artist albums error:', text);
+    }
+
+    // 4) Fetch top tracks (sample)
+    const topTracksUrl =
+      `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artistId}/top-tracks?market=US`;
+    const topRes = await fetch(topTracksUrl);
+
+    let topTracks = [];
+    if (topRes.ok) {
+      const topData = await topRes.json();
+      const tracks = topData.tracks || [];
+      topTracks = tracks.slice(0, 5).map((t) => {
+        const durationMs = t.duration_ms ?? null;
+        return {
+          name: t.name || 'Unknown track',
+          albumName: t.album?.name || null,
+          popularity: t.popularity ?? null,
+          durationMs,
+          durationFormatted: formatDurationMs(durationMs)
+        };
+      });
+    } else {
+      const text = await topRes.text();
+      console.error('Artist Stats: top-tracks error:', text);
+    }
+
+    // Pick largest image if available
+    let image = null;
+    if (Array.isArray(artistFull.images) && artistFull.images.length > 0) {
+      image = artistFull.images[0].url;
+    }
+
+    const followers = artistFull.followers?.total ?? null;
+    const popularity = artistFull.popularity ?? null;
+    const popularityTier = computePopularityTier(popularity);
+    const genres = artistFull.genres || [];
+
+    const result = {
+      artistId,
+      name: artistFull.name || artist.name || 'Unknown artist',
+      image,
+      followers,
+      popularity,
+      popularityTier,
+      genres,
+      albumCount,
+      topTracks
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error('Artist Stats endpoint error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Spotify UI, Song Stats, Album Analyzer, Song Similarity & Trend Analytics running at http://localhost:${PORT}`);
+  console.log(
+    `Spotify UI, Song Stats, Album Analyzer, Song Similarity, Trend Analytics & Artist Stats running at http://localhost:${PORT}`
+  );
 });

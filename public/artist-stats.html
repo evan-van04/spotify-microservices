@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Top Tracks · TrackIQ</title>
+  <title>Artist Stats · TrackIQ</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -22,25 +22,152 @@
   </header>
 
   <main>
-    <h1 class="page-title">Top Tracks</h1>
+    <h1 class="page-title">Artist Stats</h1>
     <p class="page-subtitle">
-      “What do I listen to the most?” – Fetch a user’s top tracks from Spotify based on their
-      listening history.
+      Search any Spotify artist to see followers, popularity, album count, and their top tracks.
     </p>
 
-    <div class="placeholder-box">
-      UI placeholder for Top Tracks microservice.<br><br>
-      Later you can add:
-      <ul>
-        <li>Login / auth entry point (for real user data)</li>
-        <li>Button to fetch top 5 tracks</li>
-        <li>List of tracks ranked by listening frequency</li>
-      </ul>
-    </div>
+    <!-- Search form -->
+    <form id="artistForm" class="playlist-form">
+      <label for="artistInput">Artist Name or Keyword</label>
+      <input
+        id="artistInput"
+        type="text"
+        placeholder="e.g., The Weeknd"
+        autocomplete="off"
+      />
+      <button type="submit">Analyze Artist</button>
+      <p class="helper-text">
+        Uses Spotify’s public artist metadata – no login required.
+      </p>
+    </form>
+
+    <!-- Result card -->
+    <div id="artistResult" class="playlist-card"></div>
   </main>
 
   <footer>
-    TrackIQ · Top Tracks
+    TrackIQ · Artist Stats
   </footer>
+
+  <script>
+    const artistForm = document.getElementById('artistForm');
+    const artistInput = document.getElementById('artistInput');
+    const artistResult = document.getElementById('artistResult');
+
+    artistForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = artistInput.value.trim();
+      if (!query) return;
+
+      artistResult.innerHTML = `
+        <div class="placeholder-box">
+          Fetching artist data from Spotify…
+        </div>
+      `;
+
+      try {
+        const res = await fetch(
+          '/api/artist-stats?q=' + encodeURIComponent(query)
+        );
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          const message = err && err.error ? err.error : 'Failed to fetch artist stats.';
+          artistResult.innerHTML = `
+            <div class="placeholder-box">
+              ${message}
+            </div>
+          `;
+          return;
+        }
+
+        const data = await res.json();
+
+        const followers =
+          data.followers != null
+            ? data.followers.toLocaleString()
+            : 'N/A';
+
+        const popularity =
+          data.popularity != null
+            ? data.popularity + ' (' + (data.popularityTier || 'Unknown tier') + ')'
+            : 'N/A';
+
+        const albumCount =
+          data.albumCount != null ? data.albumCount : 'N/A';
+
+        const topTracks = data.topTracks || [];
+
+        let topTracksRows = '';
+        if (topTracks.length > 0) {
+          topTracksRows = topTracks
+            .map((t, idx) => {
+              return `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${t.name}</td>
+                  <td>${t.albumName || '—'}</td>
+                  <td>${t.durationFormatted || '—'}</td>
+                  <td>${t.popularity != null ? t.popularity : '—'}</td>
+                </tr>
+              `;
+            })
+            .join('');
+        } else {
+          topTracksRows = `
+            <tr>
+              <td colspan="5">No top tracks available for this artist.</td>
+            </tr>
+          `;
+        }
+
+        const imageHtml = data.image
+          ? `<img src="${data.image}" alt="${data.name}" class="playlist-cover">`
+          : '';
+
+        artistResult.innerHTML = `
+          <div class="card playlist-result">
+            <div class="playlist-header">
+              ${imageHtml}
+              <div class="playlist-meta">
+                <div class="playlist-title">${data.name}</div>
+                <span>Followers: ${followers}</span>
+                <span>Popularity: ${popularity}</span>
+                <span>Albums & singles: ${albumCount}</span>
+              </div>
+            </div>
+
+            <div class="tracks-section" style="margin-top: 1.25rem;">
+              <div class="tracks-title">Top Tracks (sample)</div>
+              <div class="table-wrapper">
+                <table class="tracks-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Track</th>
+                      <th>Album</th>
+                      <th>Duration</th>
+                      <th>Popularity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${topTracksRows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Artist Stats error:', err);
+        artistResult.innerHTML = `
+          <div class="placeholder-box">
+            Internal server error while fetching artist data.
+          </div>
+        `;
+      }
+    });
+  </script>
 </body>
 </html>
