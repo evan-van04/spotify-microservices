@@ -15,6 +15,7 @@ Check if they are installed by running:
 If not installed, download and install:
 
 **Node.js (LTS)**: https://nodejs.org/
+
 **Docker**: https://www.docker.com/products/docker-desktop/
 
 Then restart your terminal and try again.
