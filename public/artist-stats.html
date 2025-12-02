@@ -28,19 +28,22 @@
     </p>
 
     <!-- Search form -->
-    <form id="artistForm" class="playlist-form">
-      <label for="artistInput">Artist Name or Keyword</label>
-      <input
-        id="artistInput"
-        type="text"
-        placeholder="e.g., The Weeknd"
-        autocomplete="off"
-      />
-      <button type="submit">Analyze Artist</button>
-      <p class="helper-text">
-        Uses Spotify’s public artist metadata – no login required.
-      </p>
-    </form>
+    
+    <div class="artist-card">
+      <form class="artist-form" id="artistForm">
+        <label for="artistInput">Artist Name or Keyword</label>
+        <input
+          id="artistInput"
+          type="text"
+          placeholder="e.g., The Weeknd"
+        />
+        <button type="submit">Analyze Artist</button>
+        
+        <p class="helper-text">
+          Uses Spotify's public artist metadata – no login required.
+        </p>
+      </form>
+    </div>
 
     <!-- Result card -->
     <div id="artistResult" class="playlist-card"></div>

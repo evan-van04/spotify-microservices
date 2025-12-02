@@ -636,3 +636,61 @@ footer {
   color: #6b7280;
   margin-top: 0.25rem;
 }
+
+/* ========================= */
+/* Artist Stats page         */
+/* ========================= */
+
+.artist-card {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: #111827;
+  border: 1px solid #1f2937;
+}
+
+.artist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.artist-form label {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.artist-form input {
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #f9fafb;
+  font-size: 0.95rem;
+}
+
+.artist-form input::placeholder {
+  color: #6b7280;
+}
+
+.artist-form button {
+  align-self: flex-start;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.artist-form button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.artist-form .helper-text {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
