@@ -24,11 +24,11 @@
   <main>
     <h1 class="page-title">Song Stats</h1>
     <p class="page-subtitle">
-      “What is this one song like?” – Inspect audio features such as tempo, valence, energy,
-      danceability, and acousticness, then map them to a mood label.
+      “What is this one song like?” – Inspect high-level track stats from Spotify: artist, album,
+      popularity, playtime, release year, and more.
     </p>
 
-    <div class="card">
+    <div class="card song-card">
       <form id="songStatsForm" class="song-stats-form">
         <label for="songQuery">Song name or keywords</label>
         <input
@@ -49,49 +49,48 @@
 
       <div id="result" class="song-result" style="display:none; margin-top: 1.5rem;">
         <div class="song-header">
-          <img
-            id="albumImage"
-            src=""
-            alt=""
-            style="width:120px; height:120px; border-radius:8px; object-fit:cover; display:none;"
-          />
-          <div>
-            <h2 id="trackName"></h2>
-            <p id="artistName" class="subtext"></p>
-            <p id="albumName" class="subtext"></p>
-          </div>
+            <img
+                id="albumImage"
+                src=""
+                alt=""
+                class="album-cover"
+                style="display:none;"
+            />
+            <div class="song-meta">
+                <h2 id="trackName" class="track-title"></h2>
+                <p id="artistLine" class="subtext"></p>
+            </div>
         </div>
+
 
         <div class="stats-grid" style="margin-top: 1rem;">
           <div class="stat-item">
-            <span class="label">Tempo (BPM)</span>
-            <span id="tempo"></span>
+            <span id="artistStat"></span>
           </div>
           <div class="stat-item">
-            <span class="label">Energy</span>
-            <span id="energy"></span>
+            <span id="albumStat"></span>
           </div>
           <div class="stat-item">
-            <span class="label">Valence (mood)</span>
-            <span id="valence"></span>
+            <span id="releaseYearStat"></span>
           </div>
           <div class="stat-item">
-            <span class="label">Danceability</span>
-            <span id="danceability"></span>
+            <span id="durationStat"></span>
           </div>
           <div class="stat-item">
-            <span class="label">Acousticness</span>
-            <span id="acousticness"></span>
+            <span id="popularityStat"></span>
           </div>
           <div class="stat-item">
-            <span class="label">Popularity</span>
-            <span id="popularity"></span>
+            <span id="popularityTierStat"></span>
           </div>
-        </div>
-
-        <div class="mood-box" style="margin-top: 1.5rem;">
-          <h3>Overall Mood</h3>
-          <p id="moodLabel"></p>
+          <div class="stat-item">
+            <span id="explicitStat"></span>
+          </div>
+          <div class="stat-item">
+            <span id="marketsStat"></span>
+          </div>
+          <div class="stat-item">
+            <span id="trackIdStat"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -109,17 +108,19 @@
     const resultEl = document.getElementById('result');
 
     const trackNameEl = document.getElementById('trackName');
-    const artistNameEl = document.getElementById('artistName');
-    const albumNameEl = document.getElementById('albumName');
+    const artistLineEl = document.getElementById('artistLine');
     const albumImageEl = document.getElementById('albumImage');
 
-    const tempoEl = document.getElementById('tempo');
-    const energyEl = document.getElementById('energy');
-    const valenceEl = document.getElementById('valence');
-    const danceabilityEl = document.getElementById('danceability');
-    const acousticnessEl = document.getElementById('acousticness');
-    const popularityEl = document.getElementById('popularity');
-    const moodLabelEl = document.getElementById('moodLabel');
+    // stat lines (all "Stat: X" style)
+    const artistStatEl = document.getElementById('artistStat');
+    const albumStatEl = document.getElementById('albumStat');
+    const releaseYearStatEl = document.getElementById('releaseYearStat');
+    const durationStatEl = document.getElementById('durationStat');
+    const popularityStatEl = document.getElementById('popularityStat');
+    const popularityTierStatEl = document.getElementById('popularityTierStat');
+    const explicitStatEl = document.getElementById('explicitStat');
+    const marketsStatEl = document.getElementById('marketsStat');
+    const trackIdStatEl = document.getElementById('trackIdStat');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -145,35 +146,41 @@
           return;
         }
 
-        // Fill fields
-        trackNameEl.textContent = data.trackName || 'Unknown track';
-        artistNameEl.textContent = data.artistName || '';
-        albumNameEl.textContent = data.albumName || '';
+        // Header info
+        const trackName = data.trackName || 'Unknown track';
+        const artistName = data.artistName || 'Unknown artist';
+        const albumName = data.albumName || 'Unknown album';
+
+        trackNameEl.textContent = trackName;
+        artistLineEl.textContent = `By ${artistName}`;
 
         if (data.albumImage) {
           albumImageEl.src = data.albumImage;
+          albumImageEl.alt = albumName || 'Album cover';
           albumImageEl.style.display = 'block';
         } else {
           albumImageEl.style.display = 'none';
         }
 
-        // Show numeric stats (if null, show "N/A")
-        function fmt(x) {
-          if (x === null || x === undefined) return 'N/A';
-          if (typeof x === 'number' && x <= 1) {
-            return Math.round(x * 100) + '%'; // for 0–1 metrics
-          }
-          return x;
-        }
+        // Build "Stat: X" lines
+        const releaseYear = data.releaseYear || 'Unknown';
+        const durationFormatted = data.durationFormatted || 'Unknown';
+        const popularity = (data.popularity != null) ? `${data.popularity} / 100` : 'Unknown';
+        const popularityTier = data.popularityTier || 'Popularity tier: Unknown';
+        const explicitText = data.explicit ? 'Yes' : 'No';
+        const marketsCount = (data.marketsCount != null)
+          ? `${data.marketsCount} markets`
+          : 'Unknown';
 
-        tempoEl.textContent = data.tempo != null ? Math.round(data.tempo) : 'N/A';
-        energyEl.textContent = fmt(data.energy);
-        valenceEl.textContent = fmt(data.valence);
-        danceabilityEl.textContent = fmt(data.danceability);
-        acousticnessEl.textContent = fmt(data.acousticness);
-        popularityEl.textContent = data.popularity != null ? data.popularity : 'N/A';
-
-        moodLabelEl.textContent = data.moodLabel || 'No mood classification available.';
+        artistStatEl.textContent = `Artist: ${artistName}`;
+        albumStatEl.textContent = `Album: ${albumName}`;
+        releaseYearStatEl.textContent = `Release Year: ${releaseYear}`;
+        durationStatEl.textContent = `Duration: ${durationFormatted}`;
+        popularityStatEl.textContent = `Popularity: ${popularity}`;
+        popularityTierStatEl.textContent = popularityTier; // already "Popularity tier: X"
+        explicitStatEl.textContent = `Explicit: ${explicitText}`;
+        marketsStatEl.textContent = `Available Markets: ${marketsCount}`;
+        trackIdStatEl.textContent = `Spotify Track ID: ${data.trackId || 'Unknown'}`;
 
         resultEl.style.display = 'block';
       } catch (err) {

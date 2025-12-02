@@ -142,3 +142,109 @@ footer {
   border-top: 1px solid #232633;
   text-align: center;
 }
+
+/* ========================= */
+/* Song Stats page specifics */
+/* ========================= */
+
+/* Slightly constrain the Song Stats card only */
+.song-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Center the whole result content */
+.song-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Album cover + title block */
+.song-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+/* Album artwork styling */
+.song-header .album-cover {
+  width: 160px;
+  height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Track title */
+.track-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+/* "By The Weeknd" line */
+.song-meta .subtext {
+  color: #cbd5f5;
+  opacity: 0.85;
+}
+
+/* Search form styling */
+.song-stats-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.song-stats-form label {
+  flex-basis: 100%;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.song-stats-form input {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #f9fafb;
+}
+
+.song-stats-form input::placeholder {
+  color: #6b7280;
+}
+
+.song-stats-form button {
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.song-stats-form button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* Stats layout */
+.stats-grid {
+  margin-top: 1.5rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.5rem 1.5rem;
+}
+
+.stat-item span {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}

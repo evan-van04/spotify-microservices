@@ -48,13 +48,24 @@ function computeMoodLabel(features) {
   return 'balanced / mixed vibe';
 }
 
-// API: Song Stats
+// Helper: compute a simple popularity tier (derived stat)
+function computePopularityTier(popularity) {
+  if (popularity == null) return 'Popularity tier: Unknown';
+  if (popularity >= 80) return 'Popularity tier: Global hit';
+  if (popularity >= 60) return 'Popularity tier: Mainstream';
+  if (popularity >= 40) return 'Popularity tier: Emerging artist';
+  return 'Popularity tier: Niche / underground';
+}
+
+// API: Song Stats (metadata only – no audio features)
 // GET /api/song-stats?q=<song name or query>
 app.get('/api/song-stats', async (req, res) => {
   try {
     const query = req.query.q;
     if (!query) {
-      return res.status(400).json({ error: 'Missing q query parameter (song name or query)' });
+      return res.status(400).json({
+        error: 'Missing q query parameter (song name or query)'
+      });
     }
 
     // 1) Search for the track via spotify-auth
@@ -74,61 +85,42 @@ app.get('/api/song-stats', async (req, res) => {
       return res.status(404).json({ error: 'No track found for that query' });
     }
 
-    const track = items[0]; // best match
-    const trackId = track.id;
+    // take best match
+    const track = items[0];
 
-    // 2) Get audio features + full track details in parallel
-    const featuresUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/audio-features/${trackId}`;
-    const trackUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/tracks/${trackId}`;
+    // You *could* also refetch via /spotify/tracks/:id, but search gives plenty.
+    const fullTrack = track;
 
-    const [featuresRes, trackRes] = await Promise.all([
-      fetch(featuresUrl),
-      fetch(trackUrl)
-    ]);
+    const releaseDate = fullTrack.album?.release_date || null; // "YYYY" or "YYYY-MM-DD"
+    const releaseYear = releaseDate ? releaseDate.slice(0, 4) : null;
 
-    let features = {};
-    let featuresOk = featuresRes.ok;
-
-    if (featuresOk) {
-      features = await featuresRes.json();
-    } else {
-      // fallback if audio-features 403s – keep the app working
-      const text = await featuresRes.text();
-      console.error('Song Stats: audio-features error (fallback):', text);
-      features = {
-        tempo: null,
-        energy: null,
-        valence: null,
-        danceability: null,
-        acousticness: null
-      };
+    const durationMs = fullTrack.duration_ms ?? null;
+    let durationFormatted = null;
+    if (durationMs != null) {
+      const minutes = Math.floor(durationMs / 60000);
+      const seconds = Math.round((durationMs % 60000) / 1000);
+      durationFormatted = `${minutes}:${String(seconds).padStart(2, '0')}`;
     }
 
-    if (!trackRes.ok) {
-      const text = await trackRes.text();
-      console.error('Song Stats: track details error:', text);
-      return res.status(trackRes.status).json({ error: 'Failed to fetch track details' });
-    }
-
-    const fullTrack = await trackRes.json();
+    const popularity = fullTrack.popularity ?? null;
+    const popularityTier = computePopularityTier(popularity);
 
     const result = {
       trackId: fullTrack.id,
       trackName: fullTrack.name,
-      artistName: fullTrack.artists?.map(a => a.name).join(', '),
-      albumName: fullTrack.album?.name,
+      artistName: fullTrack.artists?.map(a => a.name).join(', ') || null,
+      albumName: fullTrack.album?.name || null,
       albumImage: fullTrack.album?.images?.[0]?.url || null,
-      popularity: fullTrack.popularity,
-      durationMs: fullTrack.duration_ms,
-
-      tempo: features.tempo,
-      energy: features.energy,
-      valence: features.valence,
-      danceability: features.danceability,
-      acousticness: features.acousticness,
-
-      moodLabel: computeMoodLabel(features),
-      audioFeaturesAvailable: featuresOk
+      popularity,
+      popularityTier,
+      durationMs,
+      durationFormatted,
+      releaseDate,
+      releaseYear,
+      explicit: !!fullTrack.explicit,
+      marketsCount: Array.isArray(fullTrack.available_markets)
+        ? fullTrack.available_markets.length
+        : null
     };
 
     res.json(result);
