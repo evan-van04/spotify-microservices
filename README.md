@@ -44,7 +44,7 @@ This will install all required packages (including Express) into the `node_modul
 
 ---
 
-## 4. Run the Server
+## 4. Application run/close
 
 Start the application using the following:
 
