@@ -68,7 +68,7 @@ app.get('/token/app', async (req, res) => {
   }
 });
 
-// proxy: audio features for a track
+// proxy: audio features for a track (kept for potential future use)
 app.get('/spotify/audio-features/:trackId', async (req, res) => {
   try {
     const trackId = req.params.trackId;
@@ -103,7 +103,6 @@ app.get('/spotify/audio-features/:trackId', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 // proxy: track details
 app.get('/spotify/tracks/:trackId', async (req, res) => {
@@ -164,6 +163,136 @@ app.get('/spotify/search', async (req, res) => {
   }
 });
 
+// Search playlists by name (not used by album analyzer, kept for future)
+app.get('/spotify/search-playlists', async (req, res) => {
+  try {
+    const q = req.query.q;
+    if (!q) {
+      return res.status(400).json({ error: 'Missing q query parameter' });
+    }
+
+    const token = await getSpotifyAppToken();
+    const url = `https://api.spotify.com/v1/search?type=playlist&limit=1&q=${encodeURIComponent(q)}`;
+
+    const searchRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Spotify playlist search error:', text);
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Spotify playlist search failed', raw: text });
+    }
+
+    const data = await searchRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy search-playlists error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get playlist details (not used by album analyzer, kept for future)
+// GET /spotify/playlists/:playlistId
+app.get('/spotify/playlists/:playlistId', async (req, res) => {
+  try {
+    const playlistId = req.params.playlistId;
+    const token = await getSpotifyAppToken();
+
+    const url = `https://api.spotify.com/v1/playlists/${playlistId}?market=US&limit=100`;
+    const playlistRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!playlistRes.ok) {
+      const text = await playlistRes.text();
+      console.error('Spotify playlist details error:', text);
+      return res
+        .status(playlistRes.status)
+        .json({ error: 'Spotify playlist details failed', raw: text });
+    }
+
+    const data = await playlistRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy playlists error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// NEW: Search albums by name
+// GET /spotify/search-albums?q=After%20Hours
+app.get('/spotify/search-albums', async (req, res) => {
+  try {
+    const q = req.query.q;
+    if (!q) {
+      return res.status(400).json({ error: 'Missing q query parameter' });
+    }
+
+    const token = await getSpotifyAppToken();
+    const url = `https://api.spotify.com/v1/search?type=album&limit=1&q=${encodeURIComponent(q)}`;
+
+    const searchRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Spotify album search error:', text);
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Spotify album search failed', raw: text });
+    }
+
+    const data = await searchRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy search-albums error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// NEW: Get album details (including tracks)
+// GET /spotify/albums/:albumId
+app.get('/spotify/albums/:albumId', async (req, res) => {
+  try {
+    const albumId = req.params.albumId;
+    const token = await getSpotifyAppToken();
+
+    const url = `https://api.spotify.com/v1/albums/${albumId}?market=US`;
+    const albumRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!albumRes.ok) {
+      const text = await albumRes.text();
+      console.error('Spotify album details error:', text);
+      return res
+        .status(albumRes.status)
+        .json({ error: 'Spotify album details failed', raw: text });
+    }
+
+    const data = await albumRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy albums error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`spotify-auth service listening on port ${PORT}`);

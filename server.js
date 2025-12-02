@@ -25,7 +25,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Helper: compute a simple mood label from audio features
+// Helper: compute a simple mood label from audio features (currently unused here)
 function computeMoodLabel(features) {
   const { energy, danceability, valence, acousticness } = features;
 
@@ -87,8 +87,6 @@ app.get('/api/song-stats', async (req, res) => {
 
     // take best match
     const track = items[0];
-
-    // You *could* also refetch via /spotify/tracks/:id, but search gives plenty.
     const fullTrack = track;
 
     const releaseDate = fullTrack.album?.release_date || null; // "YYYY" or "YYYY-MM-DD"
@@ -130,6 +128,191 @@ app.get('/api/song-stats', async (req, res) => {
   }
 });
 
+// Helper to format ms -> "H hr M min" or "M:SS"
+function formatDurationMs(msTotal) {
+  if (msTotal == null) return null;
+  const totalSeconds = Math.round(msTotal / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours} hr ${minutes} min`;
+  }
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+// API: Album Analyzer – keyword-based album search, ranks tracks by popularity
+// GET /api/album-analyzer?q=<album name or query>
+app.get('/api/album-analyzer', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({
+        error: 'Missing q query parameter (album name or query)'
+      });
+    }
+
+    // 1) Search for the album via spotify-auth (type=album)
+    const searchUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/search-albums?q=${encodeURIComponent(query)}`;
+    const searchRes = await fetch(searchUrl);
+
+    if (!searchRes.ok) {
+      const text = await searchRes.text();
+      console.error('Album Analyzer: album search error:', text);
+      return res.status(searchRes.status).json({ error: 'Failed to search album' });
+    }
+
+    const searchData = await searchRes.json();
+    const albums = searchData?.albums?.items || [];
+    if (albums.length === 0) {
+      return res.status(404).json({ error: 'No album found for that query' });
+    }
+
+    const album = albums[0]; // best match
+    const albumId = album.id;
+
+    // 2) Fetch album details (with simplified tracks)
+    const albumUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/albums/${albumId}`;
+    const albumRes = await fetch(albumUrl);
+
+    if (!albumRes.ok) {
+      const text = await albumRes.text();
+      console.error('Album Analyzer: album details error:', text);
+      return res.status(albumRes.status).json({ error: 'Failed to fetch album details' });
+    }
+
+    const albumFull = await albumRes.json();
+
+    const albumName = albumFull.name || album.name || null;
+    const artists =
+      albumFull.artists?.map(a => a.name).join(', ') ||
+      album.artists?.map(a => a.name).join(', ') ||
+      null;
+    const releaseDate = albumFull.release_date || album.release_date || null;
+    const releaseYear = releaseDate ? releaseDate.slice(0, 4) : null;
+    const albumImage =
+      albumFull.images?.[0]?.url || album.images?.[0]?.url || null;
+
+    const tracks = albumFull.tracks?.items || [];
+    const trackRows = [];
+
+    let totalDurationMs = 0;
+    let popularitySum = 0;
+    const popularityValues = [];
+
+    // 3) For each track, fetch full track details to get popularity
+    const fullTrackPromises = tracks
+      .filter(t => t && t.id)
+      .map(async (t) => {
+        const trackId = t.id;
+        const trackUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/tracks/${trackId}`;
+        const trackRes = await fetch(trackUrl);
+
+        if (!trackRes.ok) {
+          const text = await trackRes.text();
+          console.error(`Album Analyzer: track details error for ${trackId}:`, text);
+          return null;
+        }
+
+        const fullTrack = await trackRes.json();
+        return { simplified: t, full: fullTrack };
+      });
+
+    const fullTracks = await Promise.all(fullTrackPromises);
+
+    for (const pair of fullTracks) {
+      if (!pair) continue;
+      const { simplified, full } = pair;
+
+      const name = full.name || simplified.name || 'Unknown track';
+      const artistName =
+        full.artists?.map(a => a.name).join(', ') ||
+        simplified.artists?.map(a => a.name).join(', ') ||
+        'Unknown';
+      const popularity = full.popularity ?? null;
+
+      const durationMs = full.duration_ms ?? simplified.duration_ms ?? null;
+      const durationFormatted = durationMs != null ? formatDurationMs(durationMs) : null;
+
+      const discNumber = full.disc_number ?? simplified.disc_number ?? null;
+      const trackNumber = full.track_number ?? simplified.track_number ?? null;
+
+      if (durationMs != null) totalDurationMs += durationMs;
+      if (popularity != null) {
+        popularitySum += popularity;
+        popularityValues.push(popularity);
+      }
+
+      trackRows.push({
+        name,
+        artistName,
+        popularity,
+        durationMs,
+        durationFormatted,
+        discNumber,
+        trackNumber
+      });
+    }
+
+    const totalTracks = trackRows.length;
+    const avgPopularity =
+      popularityValues.length > 0 ? popularitySum / popularityValues.length : null;
+
+    let medianPopularity = null;
+    if (popularityValues.length > 0) {
+      const sorted = [...popularityValues].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      medianPopularity =
+        sorted.length % 2 === 0
+          ? (sorted[mid - 1] + sorted[mid]) / 2
+          : sorted[mid];
+    }
+
+    // Rank tracks by popularity descending
+    trackRows.sort((a, b) => {
+      const pa = a.popularity ?? -1;
+      const pb = b.popularity ?? -1;
+      return pb - pa;
+    });
+
+    let topTrackName = null;
+    let topTrackPopularity = null;
+    if (trackRows.length > 0) {
+      topTrackName = trackRows[0].name;
+      topTrackPopularity = trackRows[0].popularity ?? null;
+    }
+
+    const rankedTracks = trackRows.map((t, idx) => ({
+      rank: idx + 1,
+      ...t
+    }));
+
+    const result = {
+      albumId,
+      albumName,
+      artists,
+      albumImage,
+      label: albumFull.label || null,
+      releaseDate,
+      releaseYear,
+      totalTracks,
+      totalDurationMs,
+      totalDurationFormatted: formatDurationMs(totalDurationMs),
+      avgPopularity,
+      medianPopularity,
+      topTrackName,
+      topTrackPopularity,
+      tracks: rankedTracks
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error('Album Analyzer endpoint error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Spotify UI & Song Stats service running at http://localhost:${PORT}`);
+  console.log(`Spotify UI, Song Stats & Album Analyzer service running at http://localhost:${PORT}`);
 });

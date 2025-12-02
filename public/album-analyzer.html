@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Album Analyzer · TrackIQ</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <div class="nav-left">
+      <a href="/" class="brand">Track <span>IQ</span></a>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="/song-stats.html">Song Stats</a></li>
+        <li><a href="/song-similarity.html">Song Similarity</a></li>
+        <li><a href="/trend-analytics.html">Trend Analytics</a></li>
+        <li><a href="/top-tracks.html">Top Tracks</a></li>
+        <li><a href="/album-analyzer.html" class="active">Album Analyzer</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1 class="page-title">Album Analyzer</h1>
+    <p class="page-subtitle">
+      “How strong is this album?” – Type an album name or keywords (e.g. <em>After Hours The Weeknd</em>)
+      and TrackIQ will find the closest Spotify album, pull all tracks, rank them by popularity,
+      and show high-level stats.
+    </p>
+
+    <div class="card playlist-card">
+      <form id="albumForm" class="playlist-form">
+        <label for="albumInput">Album name or keywords</label>
+        <input
+          id="albumInput"
+          type="text"
+          placeholder="e.g. After Hours The Weeknd, Justice Justin Bieber"
+          required
+        />
+        <button type="submit">Analyze Album</button>
+        <p class="helper-text">
+          We’ll search Spotify albums by name and pick the best match.
+        </p>
+      </form>
+
+      <div id="albumLoading" style="display:none; margin-top: 1rem;">
+        Loading album…
+      </div>
+
+      <div id="albumError" style="display:none; margin-top: 1rem; color: #dc2626;">
+      </div>
+
+      <div id="albumResult" class="playlist-result" style="display:none; margin-top: 1.5rem;">
+        <div class="playlist-header">
+          <img
+            id="albumImage"
+            src=""
+            alt=""
+            class="playlist-cover"
+            style="display:none;"
+          />
+          <div class="playlist-meta">
+            <h2 id="albumName" class="playlist-title"></h2>
+            <p id="albumArtists" class="subtext"></p>
+            <p id="albumSummaryLine" class="subtext"></p>
+          </div>
+        </div>
+
+        <div class="playlist-summary">
+          <div class="summary-item">
+            <span id="totalTracksStat"></span>
+          </div>
+          <div class="summary-item">
+            <span id="totalDurationStat"></span>
+          </div>
+          <div class="summary-item">
+            <span id="avgPopularityStat"></span>
+          </div>
+          <div class="summary-item">
+            <span id="medianPopularityStat"></span>
+          </div>
+          <div class="summary-item">
+            <span id="topTrackStat"></span>
+          </div>
+        </div>
+
+        <div class="tracks-section">
+          <h3 class="tracks-title">Tracks ranked by popularity</h3>
+          <div class="table-wrapper">
+            <table class="tracks-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Track</th>
+                  <th>Artist</th>
+                  <th>Popularity</th>
+                  <th>Duration</th>
+                  <th>Disc · Track #</th>
+                </tr>
+              </thead>
+              <tbody id="tracksTableBody">
+                <!-- rows injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    TrackIQ · Album Analyzer
+  </footer>
+
+  <script>
+    const albumForm = document.getElementById('albumForm');
+    const albumInput = document.getElementById('albumInput');
+    const loadingEl = document.getElementById('albumLoading');
+    const errorEl = document.getElementById('albumError');
+    const resultEl = document.getElementById('albumResult');
+
+    const albumImageEl = document.getElementById('albumImage');
+    const albumNameEl = document.getElementById('albumName');
+    const albumArtistsEl = document.getElementById('albumArtists');
+    const albumSummaryLineEl = document.getElementById('albumSummaryLine');
+
+    const totalTracksStatEl = document.getElementById('totalTracksStat');
+    const totalDurationStatEl = document.getElementById('totalDurationStat');
+    const avgPopularityStatEl = document.getElementById('avgPopularityStat');
+    const medianPopularityStatEl = document.getElementById('medianPopularityStat');
+    const topTrackStatEl = document.getElementById('topTrackStat');
+
+    const tracksTableBody = document.getElementById('tracksTableBody');
+
+    albumForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const q = albumInput.value.trim();
+      if (!q) return;
+
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+      resultEl.style.display = 'none';
+      loadingEl.style.display = 'block';
+
+      try {
+        // Keyword-only search: /api/album-analyzer?q=...
+        const res = await fetch(`/api/album-analyzer?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        loadingEl.style.display = 'none';
+
+        if (!res.ok) {
+          errorEl.style.display = 'block';
+          errorEl.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+
+        // Header
+        albumNameEl.textContent = data.albumName || 'Unknown album';
+        albumArtistsEl.textContent = data.artists ? `By ${data.artists}` : '';
+
+        const totalTracks = data.totalTracks ?? 0;
+        const year = data.releaseYear || 'Unknown year';
+        albumSummaryLineEl.textContent =
+          `${year} · ${totalTracks} tracks · Average popularity: ${
+            data.avgPopularity != null ? `${data.avgPopularity.toFixed(1)} / 100` : 'Unknown'
+          }`;
+
+        if (data.albumImage) {
+          albumImageEl.src = data.albumImage;
+          albumImageEl.alt = data.albumName || 'Album cover';
+          albumImageEl.style.display = 'block';
+        } else {
+          albumImageEl.style.display = 'none';
+        }
+
+        // Summary stats
+        const totalDurationText = data.totalDurationFormatted || 'Unknown';
+        const avgPopText = data.avgPopularity != null
+          ? `${data.avgPopularity.toFixed(1)} / 100`
+          : 'Unknown';
+        const medianPopText = data.medianPopularity != null
+          ? `${data.medianPopularity.toFixed(1)} / 100`
+          : 'Unknown';
+        const topTrackText = data.topTrackName
+          ? `${data.topTrackName} (${data.topTrackPopularity} / 100)`
+          : 'Unknown';
+
+        totalTracksStatEl.textContent = `Total Tracks: ${totalTracks}`;
+        totalDurationStatEl.textContent = `Total Duration: ${totalDurationText}`;
+        avgPopularityStatEl.textContent = `Average Popularity: ${avgPopText}`;
+        medianPopularityStatEl.textContent = `Median Popularity: ${medianPopText}`;
+        topTrackStatEl.textContent = `Top Track: ${topTrackText}`;
+
+        // Tracks table
+        tracksTableBody.innerHTML = '';
+        (data.tracks || []).forEach((track, index) => {
+          const tr = document.createElement('tr');
+
+          const rankTd = document.createElement('td');
+          rankTd.textContent = track.rank ?? (index + 1);
+
+          const nameTd = document.createElement('td');
+          nameTd.textContent = track.name || 'Unknown track';
+
+          const artistTd = document.createElement('td');
+          artistTd.textContent = track.artistName || 'Unknown';
+
+          const popTd = document.createElement('td');
+          popTd.textContent =
+            track.popularity != null ? `${track.popularity} / 100` : 'Unknown';
+
+          const durTd = document.createElement('td');
+          durTd.textContent = track.durationFormatted || 'Unknown';
+
+          const discTrackTd = document.createElement('td');
+          const disc = track.discNumber != null ? track.discNumber : '?';
+          const trackNum = track.trackNumber != null ? track.trackNumber : '?';
+          discTrackTd.textContent = `${disc} · ${trackNum}`;
+
+          tr.append(rankTd, nameTd, artistTd, popTd, durTd, discTrackTd);
+          tracksTableBody.appendChild(tr);
+        });
+
+        resultEl.style.display = 'block';
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Request failed: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
