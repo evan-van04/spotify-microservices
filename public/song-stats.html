@@ -28,19 +28,160 @@
       danceability, and acousticness, then map them to a mood label.
     </p>
 
-    <div class="placeholder-box">
-      UI placeholder for Song Stats microservice.<br><br>
-      Later you can add:
-      <ul>
-        <li>A text input for Spotify track URL/ID</li>
-        <li>A button that calls <code>/song-stats</code> on your backend</li>
-        <li>A card showing tempo, energy, etc. with a mood label</li>
-      </ul>
+    <div class="card">
+      <form id="songStatsForm" class="song-stats-form">
+        <label for="songQuery">Song name or keywords</label>
+        <input
+          id="songQuery"
+          type="text"
+          placeholder="e.g. Mr Brightside, The Killers"
+          required
+        />
+        <button type="submit">Get Song Stats</button>
+      </form>
+
+      <div id="loading" style="display:none; margin-top: 1rem;">
+        Loading…
+      </div>
+
+      <div id="error" style="display:none; margin-top: 1rem; color: #dc2626;">
+      </div>
+
+      <div id="result" class="song-result" style="display:none; margin-top: 1.5rem;">
+        <div class="song-header">
+          <img
+            id="albumImage"
+            src=""
+            alt=""
+            style="width:120px; height:120px; border-radius:8px; object-fit:cover; display:none;"
+          />
+          <div>
+            <h2 id="trackName"></h2>
+            <p id="artistName" class="subtext"></p>
+            <p id="albumName" class="subtext"></p>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="margin-top: 1rem;">
+          <div class="stat-item">
+            <span class="label">Tempo (BPM)</span>
+            <span id="tempo"></span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Energy</span>
+            <span id="energy"></span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Valence (mood)</span>
+            <span id="valence"></span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Danceability</span>
+            <span id="danceability"></span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Acousticness</span>
+            <span id="acousticness"></span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Popularity</span>
+            <span id="popularity"></span>
+          </div>
+        </div>
+
+        <div class="mood-box" style="margin-top: 1.5rem;">
+          <h3>Overall Mood</h3>
+          <p id="moodLabel"></p>
+        </div>
+      </div>
     </div>
   </main>
 
   <footer>
     TrackIQ · Song Stats
   </footer>
+
+  <script>
+    const form = document.getElementById('songStatsForm');
+    const queryInput = document.getElementById('songQuery');
+    const loadingEl = document.getElementById('loading');
+    const errorEl = document.getElementById('error');
+    const resultEl = document.getElementById('result');
+
+    const trackNameEl = document.getElementById('trackName');
+    const artistNameEl = document.getElementById('artistName');
+    const albumNameEl = document.getElementById('albumName');
+    const albumImageEl = document.getElementById('albumImage');
+
+    const tempoEl = document.getElementById('tempo');
+    const energyEl = document.getElementById('energy');
+    const valenceEl = document.getElementById('valence');
+    const danceabilityEl = document.getElementById('danceability');
+    const acousticnessEl = document.getElementById('acousticness');
+    const popularityEl = document.getElementById('popularity');
+    const moodLabelEl = document.getElementById('moodLabel');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const q = queryInput.value.trim();
+      if (!q) return;
+
+      // reset UI
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+      resultEl.style.display = 'none';
+      loadingEl.style.display = 'block';
+
+      try {
+        const res = await fetch(`/api/song-stats?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        loadingEl.style.display = 'none';
+
+        if (!res.ok) {
+          errorEl.style.display = 'block';
+          errorEl.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+
+        // Fill fields
+        trackNameEl.textContent = data.trackName || 'Unknown track';
+        artistNameEl.textContent = data.artistName || '';
+        albumNameEl.textContent = data.albumName || '';
+
+        if (data.albumImage) {
+          albumImageEl.src = data.albumImage;
+          albumImageEl.style.display = 'block';
+        } else {
+          albumImageEl.style.display = 'none';
+        }
+
+        // Show numeric stats (if null, show "N/A")
+        function fmt(x) {
+          if (x === null || x === undefined) return 'N/A';
+          if (typeof x === 'number' && x <= 1) {
+            return Math.round(x * 100) + '%'; // for 0–1 metrics
+          }
+          return x;
+        }
+
+        tempoEl.textContent = data.tempo != null ? Math.round(data.tempo) : 'N/A';
+        energyEl.textContent = fmt(data.energy);
+        valenceEl.textContent = fmt(data.valence);
+        danceabilityEl.textContent = fmt(data.danceability);
+        acousticnessEl.textContent = fmt(data.acousticness);
+        popularityEl.textContent = data.popularity != null ? data.popularity : 'N/A';
+
+        moodLabelEl.textContent = data.moodLabel || 'No mood classification available.';
+
+        resultEl.style.display = 'block';
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Request failed: ' + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
