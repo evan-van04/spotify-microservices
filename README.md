@@ -125,3 +125,9 @@ To terminate the application, enter:
     Ctrl+C (or whatever is appropriate for your system)
 
 To terminate all running processes in the code.
+
+## 8. Testing
+
+To test the application locally, enter: 
+
+    npm test
