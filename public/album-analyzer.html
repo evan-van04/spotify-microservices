@@ -1,3 +1,9 @@
+<!--
+  File: album-analyzer.html
+  Author: Evan Van
+  Course: CS4471
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +12,10 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+  <!-- =====================
+       Section: Navigation Bar
+       ===================== -->
   <header>
     <div class="nav-left">
       <a href="/" class="brand">Track <span>IQ</span></a>
@@ -21,6 +31,9 @@
     </nav>
   </header>
 
+  <!-- =====================
+       Section: Page Header
+       ===================== -->
   <main>
     <h1 class="page-title">Album Analyzer</h1>
     <p class="page-subtitle">
@@ -29,6 +42,9 @@
       and show high-level stats.
     </p>
 
+    <!-- =====================
+         Section: Album Form + Results
+         ===================== -->
     <div class="card playlist-card">
       <form id="albumForm" class="playlist-form">
         <label for="albumInput">Album name or keywords</label>
@@ -44,22 +60,21 @@
         </p>
       </form>
 
+      <!-- Loading / Error -->
       <div id="albumLoading" style="display:none; margin-top: 1rem;">
         Loading album…
       </div>
 
-      <div id="albumError" style="display:none; margin-top: 1rem; color: #dc2626;">
-      </div>
+      <div id="albumError" style="display:none; margin-top: 1rem; color: #dc2626;"></div>
 
+      <!-- =====================
+           Section: Album Result Container
+           ===================== -->
       <div id="albumResult" class="playlist-result" style="display:none; margin-top: 1.5rem;">
+
+        <!-- Album Header -->
         <div class="playlist-header">
-          <img
-            id="albumImage"
-            src=""
-            alt=""
-            class="playlist-cover"
-            style="display:none;"
-          />
+          <img id="albumImage" src="" alt="" class="playlist-cover" style="display:none;" />
           <div class="playlist-meta">
             <h2 id="albumName" class="playlist-title"></h2>
             <p id="albumArtists" class="subtext"></p>
@@ -67,24 +82,16 @@
           </div>
         </div>
 
+        <!-- Album Summary Stats -->
         <div class="playlist-summary">
-          <div class="summary-item">
-            <span id="totalTracksStat"></span>
-          </div>
-          <div class="summary-item">
-            <span id="totalDurationStat"></span>
-          </div>
-          <div class="summary-item">
-            <span id="avgPopularityStat"></span>
-          </div>
-          <div class="summary-item">
-            <span id="medianPopularityStat"></span>
-          </div>
-          <div class="summary-item">
-            <span id="topTrackStat"></span>
-          </div>
+          <div class="summary-item"><span id="totalTracksStat"></span></div>
+          <div class="summary-item"><span id="totalDurationStat"></span></div>
+          <div class="summary-item"><span id="avgPopularityStat"></span></div>
+          <div class="summary-item"><span id="medianPopularityStat"></span></div>
+          <div class="summary-item"><span id="topTrackStat"></span></div>
         </div>
 
+        <!-- Track Table -->
         <div class="tracks-section">
           <h3 class="tracks-title">Tracks ranked by popularity</h3>
           <div class="table-wrapper">
@@ -99,20 +106,25 @@
                   <th>Disc · Track #</th>
                 </tr>
               </thead>
-              <tbody id="tracksTableBody">
-                <!-- rows injected via JS -->
-              </tbody>
+              <tbody id="tracksTableBody"></tbody>
             </table>
           </div>
         </div>
+
       </div>
     </div>
   </main>
 
+  <!-- =====================
+       Section: Footer
+       ===================== -->
   <footer>
     TrackIQ · Album Analyzer
   </footer>
 
+  <!-- =====================
+       Section: Script Logic
+       ===================== -->
   <script>
     const albumForm = document.getElementById('albumForm');
     const albumInput = document.getElementById('albumInput');
@@ -145,7 +157,6 @@
       loadingEl.style.display = 'block';
 
       try {
-        // Keyword-only search: /api/album-analyzer?q=...
         const res = await fetch(`/api/album-analyzer?q=${encodeURIComponent(q)}`);
         const data = await res.json();
 
@@ -157,7 +168,9 @@
           return;
         }
 
-        // Header
+        /* =====================
+           Album Header
+           ===================== */
         albumNameEl.textContent = data.albumName || 'Unknown album';
         albumArtistsEl.textContent = data.artists ? `By ${data.artists}` : '';
 
@@ -176,14 +189,14 @@
           albumImageEl.style.display = 'none';
         }
 
-        // Summary stats
+        /* =====================
+           Summary Statistics
+           ===================== */
         const totalDurationText = data.totalDurationFormatted || 'Unknown';
-        const avgPopText = data.avgPopularity != null
-          ? `${data.avgPopularity.toFixed(1)} / 100`
-          : 'Unknown';
-        const medianPopText = data.medianPopularity != null
-          ? `${data.medianPopularity.toFixed(1)} / 100`
-          : 'Unknown';
+        const avgPopText =
+          data.avgPopularity != null ? `${data.avgPopularity.toFixed(1)} / 100` : 'Unknown';
+        const medianPopText =
+          data.medianPopularity != null ? `${data.medianPopularity.toFixed(1)} / 100` : 'Unknown';
         const topTrackText = data.topTrackName
           ? `${data.topTrackName} (${data.topTrackPopularity} / 100)`
           : 'Unknown';
@@ -194,13 +207,15 @@
         medianPopularityStatEl.textContent = `Median Popularity: ${medianPopText}`;
         topTrackStatEl.textContent = `Top Track: ${topTrackText}`;
 
-        // Tracks table
+        /* =====================
+           Table Rows (Tracks)
+           ===================== */
         tracksTableBody.innerHTML = '';
         (data.tracks || []).forEach((track, index) => {
           const tr = document.createElement('tr');
 
           const rankTd = document.createElement('td');
-          rankTd.textContent = track.rank ?? (index + 1);
+          rankTd.textContent = track.rank ?? index + 1;
 
           const nameTd = document.createElement('td');
           nameTd.textContent = track.name || 'Unknown track';
@@ -217,8 +232,8 @@
 
           const discTrackTd = document.createElement('td');
           const disc = track.discNumber != null ? track.discNumber : '?';
-          const trackNum = track.trackNumber != null ? track.trackNumber : '?';
-          discTrackTd.textContent = `${disc} · ${trackNum}`;
+          const tNum = track.trackNumber != null ? track.trackNumber : '?';
+          discTrackTd.textContent = `${disc} · ${tNum}`;
 
           tr.append(rankTd, nameTd, artistTd, popTd, durTd, discTrackTd);
           tracksTableBody.appendChild(tr);

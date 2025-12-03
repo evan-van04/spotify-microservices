@@ -1,3 +1,9 @@
+<!--
+  File: service-registry.html
+  Author: Evan Van
+  Course: CS4471
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,14 +13,16 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
+  <!-- =====================
+       Section: Navigation Bar
+       ===================== -->
   <header>
     <div class="nav-left">
       <a href="/" class="brand">Track<span>IQ</span></a>
     </div>
     <nav>
       <ul>
-        <!-- IMPORTANT: no link to the registry here, 
-             so it's NOT accessible from other pages -->
         <li><a href="/song-stats.html">Song Stats</a></li>
         <li><a href="/song-similarity.html">Song Similarity</a></li>
         <li><a href="/trend-analytics.html">Trend Analytics</a></li>
@@ -24,12 +32,18 @@
     </nav>
   </header>
 
+  <!-- =====================
+       Section: Page Title
+       ===================== -->
   <main>
     <h1 class="page-title">Service Registry</h1>
     <p class="registry-subtitle">
       View all registered TrackIQ microservices and jump to their UIs.
     </p>
 
+    <!-- =====================
+         Section: Registry Search Form
+         ===================== -->
     <section class="card registry-card">
       <form id="registrySearchForm" class="registry-form">
         <label for="registrySearchInput">
@@ -50,10 +64,16 @@
     </section>
   </main>
 
+  <!-- =====================
+       Section: Footer
+       ===================== -->
   <footer>
     TrackIQ · Spotify Microservices · Service Registry
   </footer>
 
+  <!-- =====================
+       Section: Registry UI Logic
+       ===================== -->
   <script>
     async function fetchServices(query) {
       const statusEl = document.getElementById('registryStatus');
@@ -149,7 +169,6 @@
         fetchServices(input.value);
       });
 
-      // Load all services on first load (empty query)
       fetchServices('');
     });
   </script>

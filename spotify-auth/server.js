@@ -1,4 +1,8 @@
-// 8081 server.js  --- spotify-auth
+/**
+ * File: server.js (spotify-auth)
+ * Author: Evan Van
+ * Course: CS4471
+ */
 
 const express = require('express');
 
@@ -9,18 +13,19 @@ const fetch = (...args) =>
 const app = express();
 const PORT = process.env.PORT || 8081;
 
-// Spotify app credentials (ONLY live on backend, never frontend)
+// =====================
+// Section: Spotify App Token Management
+// =====================
+
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-// simple in-memory token cache
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
 async function getSpotifyAppToken() {
   const now = Date.now();
 
-  // reuse token if still valid
   if (cachedToken && now < tokenExpiresAt) {
     return cachedToken;
   }
@@ -48,18 +53,19 @@ async function getSpotifyAppToken() {
 
   const data = await res.json();
   cachedToken = data.access_token;
-  // expires_in is seconds – refresh 60s before expiry
   tokenExpiresAt = now + (data.expires_in - 60) * 1000;
 
   return cachedToken;
 }
 
-// health check
+// =====================
+// Section: Health + Token Broker Endpoints
+// =====================
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// optional: token broker for other services
 app.get('/token/app', async (req, res) => {
   try {
     const token = await getSpotifyAppToken();
@@ -70,7 +76,10 @@ app.get('/token/app', async (req, res) => {
   }
 });
 
-// proxy: audio features for a track (kept for potential future use)
+// =====================
+// Section: Track & Audio Features Proxies
+// =====================
+
 app.get('/spotify/audio-features/:trackId', async (req, res) => {
   try {
     const trackId = req.params.trackId;
@@ -106,7 +115,6 @@ app.get('/spotify/audio-features/:trackId', async (req, res) => {
   }
 });
 
-// proxy: track details
 app.get('/spotify/tracks/:trackId', async (req, res) => {
   try {
     const trackId = req.params.trackId;
@@ -132,8 +140,10 @@ app.get('/spotify/tracks/:trackId', async (req, res) => {
   }
 });
 
-// Proxy: search for a track by name (or generic query string)
-// GET /spotify/search?q=<query>&limit=50&market=CA
+// =====================
+// Section: Track & Playlist Search
+// =====================
+
 app.get('/spotify/search', async (req, res) => {
   try {
     const q = req.query.q;
@@ -144,10 +154,9 @@ app.get('/spotify/search', async (req, res) => {
     const limitParam = parseInt(req.query.limit, 10);
     const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 50
       ? limitParam
-      : 1; // default 1 for Song Stats etc.
+      : 1;
 
     const market = req.query.market || 'US';
-
     const token = await getSpotifyAppToken();
 
     const url =
@@ -167,7 +176,9 @@ app.get('/spotify/search', async (req, res) => {
     if (!searchRes.ok) {
       const text = await searchRes.text();
       console.error('Spotify search error:', text);
-      return res.status(searchRes.status).json({ error: 'Spotify search failed', raw: text });
+      return res
+        .status(searchRes.status)
+        .json({ error: 'Spotify search failed', raw: text });
     }
 
     const data = await searchRes.json();
@@ -178,7 +189,6 @@ app.get('/spotify/search', async (req, res) => {
   }
 });
 
-// Search playlists by name (kept for completeness – no longer used by Trend Analytics)
 app.get('/spotify/search-playlists', async (req, res) => {
   try {
     const q = req.query.q;
@@ -186,14 +196,14 @@ app.get('/spotify/search-playlists', async (req, res) => {
       return res.status(400).json({ error: 'Missing q query parameter' });
     }
 
-    // allow caller to request more than 1 result (default 10)
     const limitParam = parseInt(req.query.limit, 10);
     const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 50
       ? limitParam
       : 10;
 
     const token = await getSpotifyAppToken();
-    const url = `https://api.spotify.com/v1/search?type=playlist&limit=${limit}&q=${encodeURIComponent(q)}`;
+    const url =
+      `https://api.spotify.com/v1/search?type=playlist&limit=${limit}&q=${encodeURIComponent(q)}`;
 
     const searchRes = await fetch(url, {
       method: 'GET',
@@ -218,8 +228,10 @@ app.get('/spotify/search-playlists', async (req, res) => {
   }
 });
 
-// NEW: Search albums by name
-// GET /spotify/search-albums?q=After%20Hours
+// =====================
+// Section: Album Search & Details
+// =====================
+
 app.get('/spotify/search-albums', async (req, res) => {
   try {
     const q = req.query.q;
@@ -228,7 +240,8 @@ app.get('/spotify/search-albums', async (req, res) => {
     }
 
     const token = await getSpotifyAppToken();
-    const url = `https://api.spotify.com/v1/search?type=album&limit=1&q=${encodeURIComponent(q)}`;
+    const url =
+      `https://api.spotify.com/v1/search?type=album&limit=1&q=${encodeURIComponent(q)}`;
 
     const searchRes = await fetch(url, {
       method: 'GET',
@@ -253,8 +266,6 @@ app.get('/spotify/search-albums', async (req, res) => {
   }
 });
 
-// NEW: Get album details (including tracks)
-// GET /spotify/albums/:albumId
 app.get('/spotify/albums/:albumId', async (req, res) => {
   try {
     const albumId = req.params.albumId;
@@ -284,8 +295,10 @@ app.get('/spotify/albums/:albumId', async (req, res) => {
   }
 });
 
-// NEW: Search artists by name
-// GET /spotify/search-artists?q=Drake
+// =====================
+// Section: Artist Search & Details
+// =====================
+
 app.get('/spotify/search-artists', async (req, res) => {
   try {
     const q = req.query.q;
@@ -328,8 +341,6 @@ app.get('/spotify/search-artists', async (req, res) => {
   }
 });
 
-// NEW: Get artist details by ID
-// GET /spotify/artists/:artistId
 app.get('/spotify/artists/:artistId', async (req, res) => {
   try {
     const artistId = req.params.artistId;
@@ -359,8 +370,10 @@ app.get('/spotify/artists/:artistId', async (req, res) => {
   }
 });
 
-// NEW: Artist's albums (albums + singles)
-// GET /spotify/artists/:artistId/albums?include_groups=album,single&limit=50
+// =====================
+// Section: Artist Catalog & Top Tracks
+// =====================
+
 app.get('/spotify/artists/:artistId/albums', async (req, res) => {
   try {
     const artistId = req.params.artistId;
@@ -400,8 +413,6 @@ app.get('/spotify/artists/:artistId/albums', async (req, res) => {
   }
 });
 
-// NEW: Artist's top tracks
-// GET /spotify/artists/:artistId/top-tracks
 app.get('/spotify/artists/:artistId/top-tracks', async (req, res) => {
   try {
     const artistId = req.params.artistId;
@@ -409,7 +420,8 @@ app.get('/spotify/artists/:artistId/top-tracks', async (req, res) => {
 
     const market = req.query.market || 'US';
 
-    const url = `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=${encodeURIComponent(market)}`;
+    const url =
+      `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=${encodeURIComponent(market)}`;
     const topRes = await fetch(url, {
       method: 'GET',
       headers: {
@@ -433,7 +445,10 @@ app.get('/spotify/artists/:artistId/top-tracks', async (req, res) => {
   }
 });
 
-// NEW: Related artists (NOTE: may be restricted for dev apps)
+// =====================
+// Section: Related Artists
+// =====================
+
 app.get('/spotify/artists/:artistId/related-artists', async (req, res) => {
   try {
     const artistId = req.params.artistId;
@@ -463,10 +478,10 @@ app.get('/spotify/artists/:artistId/related-artists', async (req, res) => {
   }
 });
 
+// =====================
+// Section: Server Startup
+// =====================
+
 app.listen(PORT, () => {
   console.log(`spotify-auth service listening on port ${PORT}`);
 });
-
-module.exports = {
-  getSpotifyAppToken
-};

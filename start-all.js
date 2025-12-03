@@ -1,15 +1,25 @@
+/**
+ * File: start-all.js
+ * Author: Mike Tran
+ * Course: CS4471
+ */
+
 const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
-require('dotenv').config({ path: path.join(__dirname, 'spotify-auth', '.env') });
 
+// Load environment variables from spotify-auth/.env
+require('dotenv').config({
+  path: path.join(__dirname, 'spotify-auth', '.env')
+});
 
-
-// Helper to spawn a Node process
+/* ================================
+   Section: Helper – Run a Service
+   ================================ */
 function runService(name, scriptPath, env = {}) {
   const proc = spawn('node', [scriptPath], {
     stdio: 'inherit',
-    env: { ...process.env, ...env } // merge with current env
+    env: { ...process.env, ...env }
   });
 
   proc.on('close', code => {
@@ -20,7 +30,9 @@ function runService(name, scriptPath, env = {}) {
   return proc;
 }
 
-// Cross-platform function to open browser
+/* ================================
+   Section: Helper – Open Browser
+   ================================ */
 function openBrowser(url) {
   const platform = os.platform();
   let cmd;
@@ -36,22 +48,21 @@ function openBrowser(url) {
   spawn(cmd, [url], { shell: true, stdio: 'ignore' });
 }
 
-// Paths to server.js files
+/* ================================
+   Section: Paths to Services
+   ================================ */
 const authPath = path.join(__dirname, 'spotify-auth', 'server.js');
 const mainPath = path.join(__dirname, 'server.js');
 const serviceRegistryPath = path.join(__dirname, 'service-registry', 'server.js');
 
-// Run services (dotenv will load the .env automatically)
-const serviceRegistryProc = runService('Service Registry', serviceRegistryPath, {
-  PORT: '8082'
-});
-
-console.log('Starting Spotify Auth on port 8081...');
-const authProc = runService('Spotify Auth', authPath, {
-  PORT: '8081'
-});
+/* ================================
+   Section: Run All Services
+   ================================ */
+const authProc = runService('Spotify Auth', authPath);
 const mainProc = runService('Main Service', mainPath);
+const serviceRegistryProc = runService('Service Registry', serviceRegistryPath);
 
-
-// Open the main UI in default browser
+/* ================================
+   Section: Open Main UI
+   ================================ */
 openBrowser('http://localhost:8080');

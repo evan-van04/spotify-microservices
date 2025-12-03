@@ -1,6 +1,12 @@
+/**
+ * File: server.js
+ * Author: Evan Van
+ * Course: CS4471
+ */
+
 const REGISTRY_URL = process.env.SERVICE_REGISTRY_URL;
 
-// 8080 server.js  --- main UI + microservices
+// Main UI server and microservice API gateway (port 8080)
 
 const express = require('express');
 const path = require('path');
@@ -12,35 +18,37 @@ const fetch = (...args) =>
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Base URL for spotify-auth microservice
+// Microservice base URLs
 const SPOTIFY_AUTH_BASE_URL =
   process.env.SPOTIFY_AUTH_BASE_URL || 'http://localhost:8081';
 
-// Base URL for Service Registry
 const SERVICE_REGISTRY_URL =
   process.env.SERVICE_REGISTRY_URL || 'http://localhost:8082';
 
-// Backup Registry
 const SERVICE_REGISTRY_BACKUP_URL =
   process.env.SERVICE_REGISTRY_BACKUP_URL || null;
 
 const PUBLIC_BASE_URL =
-  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`
+  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 
-// Serve static files from /public
+// =====================
+// Section: Static UI and Health Check
+// =====================
+
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Root route -> landing page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Health endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Helper: compute a simple mood label from audio features (currently unused here)
+// =====================
+// Section: Helper Functions (mood, popularity, duration, country labels)
+// =====================
+
 function computeMoodLabel(features) {
   const { energy, danceability, valence, acousticness } = features;
 
@@ -68,7 +76,6 @@ function computeMoodLabel(features) {
   return 'balanced / mixed vibe';
 }
 
-// Helper: compute a simple popularity tier (derived stat)
 function computePopularityTier(popularity) {
   if (popularity == null) return 'Popularity tier: Unknown';
   if (popularity >= 80) return 'Popularity tier: Global hit';
@@ -77,7 +84,6 @@ function computePopularityTier(popularity) {
   return 'Popularity tier: Niche / underground';
 }
 
-// Helper: format ms -> "H hr M min" or "M:SS"
 function formatDurationMs(msTotal) {
   if (msTotal == null) return null;
   const totalSeconds = Math.round(msTotal / 1000);
@@ -91,7 +97,6 @@ function formatDurationMs(msTotal) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-// Simple mapping from market code to display label
 const COUNTRY_LABELS = {
   GLOBAL: 'Global',
 
@@ -305,9 +310,9 @@ const COUNTRY_LABELS = {
 };
 
 // =====================
-// API: Song Stats
+// Section: API – Song Stats
 // =====================
-// GET /api/song-stats?q=<song name or query>
+
 app.get('/api/song-stats', async (req, res) => {
   try {
     const query = req.query.q;
@@ -317,7 +322,6 @@ app.get('/api/song-stats', async (req, res) => {
       });
     }
 
-    // 1) Search for the track via spotify-auth
     const searchUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/search` +
       `?q=${encodeURIComponent(query)}` +
@@ -340,11 +344,10 @@ app.get('/api/song-stats', async (req, res) => {
       return res.status(404).json({ error: 'No track found for that query' });
     }
 
-    // take best match
     const track = items[0];
     const fullTrack = track;
 
-    const releaseDate = fullTrack.album?.release_date || null; // "YYYY" or "YYYY-MM-DD"
+    const releaseDate = fullTrack.album?.release_date || null;
     const releaseYear = releaseDate ? releaseDate.slice(0, 4) : null;
 
     const durationMs = fullTrack.duration_ms ?? null;
@@ -382,9 +385,9 @@ app.get('/api/song-stats', async (req, res) => {
 });
 
 // =====================
-// API: Album Analyzer
+// Section: API – Album Analyzer
 // =====================
-// GET /api/album-analyzer?q=<album name or query>
+
 app.get('/api/album-analyzer', async (req, res) => {
   try {
     const query = req.query.q;
@@ -394,7 +397,6 @@ app.get('/api/album-analyzer', async (req, res) => {
       });
     }
 
-    // 1) Search for the album via spotify-auth (type=album)
     const searchUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/search-albums` +
       `?q=${encodeURIComponent(query)}`;
@@ -415,10 +417,9 @@ app.get('/api/album-analyzer', async (req, res) => {
       return res.status(404).json({ error: 'No album found for that query' });
     }
 
-    const album = albums[0]; // best match
+    const album = albums[0];
     const albumId = album.id;
 
-    // 2) Fetch album details (with simplified tracks)
     const albumUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/albums/${albumId}`;
     const albumRes = await fetch(albumUrl);
 
@@ -449,7 +450,6 @@ app.get('/api/album-analyzer', async (req, res) => {
     let popularitySum = 0;
     const popularityValues = [];
 
-    // 3) For each track, fetch full track details to get popularity
     const fullTrackPromises = tracks
       .filter((t) => t && t.id)
       .map(async (t) => {
@@ -524,7 +524,6 @@ app.get('/api/album-analyzer', async (req, res) => {
           : sorted[mid];
     }
 
-    // Rank tracks by popularity descending
     trackRows.sort((a, b) => {
       const pa = a.popularity ?? -1;
       const pb = b.popularity ?? -1;
@@ -569,8 +568,9 @@ app.get('/api/album-analyzer', async (req, res) => {
 });
 
 // ===============================
-// Helper for Song Similarity
+// Section: Helper – Song Similarity Scoring
 // ===============================
+
 function computeSimilarityScore(seed, candidate, flags) {
   let score = 0;
 
@@ -592,7 +592,7 @@ function computeSimilarityScore(seed, candidate, flags) {
   }
 
   if (popularityDiff != null) {
-    score -= popularityDiff * 0.03; // up to ~3 points penalty for huge diff
+    score -= popularityDiff * 0.03;
   }
 
   if (durationDiffSec != null) {
@@ -608,9 +608,9 @@ function computeSimilarityScore(seed, candidate, flags) {
 }
 
 // =====================
-// API: Song Similarity
+// Section: API – Song Similarity
 // =====================
-// GET /api/song-similarity?q=<song name or query>
+
 app.get('/api/song-similarity', async (req, res) => {
   try {
     const query = req.query.q;
@@ -620,7 +620,6 @@ app.get('/api/song-similarity', async (req, res) => {
       });
     }
 
-    // 1) Resolve seed track
     const searchUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/search` +
       `?q=${encodeURIComponent(query)}` +
@@ -676,7 +675,6 @@ app.get('/api/song-similarity', async (req, res) => {
       explicit: seedExplicit
     };
 
-    // 2) Fetch same-artist top tracks + related artists
     const topTracksUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${seedArtistId}/top-tracks?market=US`;
     const relatedArtistsUrl =
@@ -703,7 +701,6 @@ app.get('/api/song-similarity', async (req, res) => {
     const sameArtistTracks = topData.tracks || [];
     const relatedArtists = relatedData.artists || [];
 
-    // For related artists, fetch top tracks for top 3 related artists (if any)
     const relatedTopPromises = relatedArtists.slice(0, 3).map(async (artist) => {
       if (!artist.id) return null;
       const url =
@@ -723,13 +720,11 @@ app.get('/api/song-similarity', async (req, res) => {
 
     const relatedTopResults = await Promise.all(relatedTopPromises);
 
-    // 3) Build candidate pool
     const candidatesMap = new Map();
 
-    // Helper to add candidate
     function addCandidate(track, opts) {
       if (!track || !track.id) return;
-      if (track.id === seedTrack.id) return; // don't recommend exact same track
+      if (track.id === seedTrack.id) return;
       if (candidatesMap.has(track.id)) return;
 
       const releaseDate = track.album?.release_date || null;
@@ -754,7 +749,6 @@ app.get('/api/song-similarity', async (req, res) => {
       });
     }
 
-    // Same-artist top tracks
     for (const t of sameArtistTracks) {
       addCandidate(t, {
         isSameArtist: true,
@@ -763,7 +757,6 @@ app.get('/api/song-similarity', async (req, res) => {
       });
     }
 
-    // Related-artist top tracks
     for (const block of relatedTopResults) {
       if (!block) continue;
       const artist = block.artist;
@@ -784,7 +777,6 @@ app.get('/api/song-similarity', async (req, res) => {
       explicit: seedExplicit
     };
 
-    // 4) Score candidates & pick top 5
     const scored = [];
 
     for (const [id, entry] of candidatesMap.entries()) {
@@ -819,7 +811,6 @@ app.get('/api/song-similarity', async (req, res) => {
         explicitMismatch
       });
 
-      // Build a short "reason" summary
       const reasons = [];
       if (meta.isSameArtist) reasons.push('same artist');
       else if (meta.isFromRelatedArtist) reasons.push('related artist');
@@ -882,10 +873,9 @@ app.get('/api/song-similarity', async (req, res) => {
 });
 
 // =====================
-// API: Trend Analytics
+// Section: API – Trend Analytics
 // =====================
-// GET /api/trend-analytics?country=<marketCode>
-// Example: /api/trend-analytics?country=CA
+
 app.get('/api/trend-analytics', async (req, res) => {
   try {
     let code = (req.query.country || '').trim().toUpperCase();
@@ -893,13 +883,8 @@ app.get('/api/trend-analytics', async (req, res) => {
       code = 'GLOBAL';
     }
 
-    // Map to display label
     const displayCountry = COUNTRY_LABELS[code] || code;
-
-    // Spotify market code to use
     const market = code === 'GLOBAL' ? 'US' : code;
-
-    // Query string: tracks released from 2020 to 2025 (ish)
     const q = 'year:2020-2025';
 
     const searchUrl =
@@ -927,7 +912,6 @@ app.get('/api/trend-analytics', async (req, res) => {
       });
     }
 
-    // Sort by popularity descending and take top 10
     const sorted = [...items].sort(
       (a, b) => (b.popularity || 0) - (a.popularity || 0)
     );
@@ -951,7 +935,6 @@ app.get('/api/trend-analytics', async (req, res) => {
       };
     });
 
-    // Summary stats
     const popularityValues = topTracks
       .map((t) => t.popularity)
       .filter((p) => p != null);
@@ -988,9 +971,9 @@ app.get('/api/trend-analytics', async (req, res) => {
 });
 
 // =====================
-// API: Artist Stats
+// Section: API – Artist Stats
 // =====================
-// GET /api/artist-stats?q=<artist name or query>
+
 app.get('/api/artist-stats', async (req, res) => {
   try {
     const query = req.query.q;
@@ -1000,7 +983,6 @@ app.get('/api/artist-stats', async (req, res) => {
       });
     }
 
-    // 1) Search for the artist via spotify-auth
     const searchUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/search-artists` +
       `?q=${encodeURIComponent(query)}` +
@@ -1025,7 +1007,6 @@ app.get('/api/artist-stats', async (req, res) => {
     const artist = artists[0];
     const artistId = artist.id;
 
-    // 2) Fetch full artist details
     const artistUrl = `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artistId}`;
     const artistRes = await fetch(artistUrl);
 
@@ -1039,7 +1020,6 @@ app.get('/api/artist-stats', async (req, res) => {
 
     const artistFull = await artistRes.json();
 
-    // 3) Fetch albums (albums + singles) to get a count
     const albumsUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artistId}/albums` +
       `?include_groups=album,single&limit=50`;
@@ -1058,7 +1038,6 @@ app.get('/api/artist-stats', async (req, res) => {
       console.error('Artist Stats: artist albums error:', text);
     }
 
-    // 4) Fetch top tracks (sample)
     const topTracksUrl =
       `${SPOTIFY_AUTH_BASE_URL}/spotify/artists/${artistId}/top-tracks?market=US`;
     const topRes = await fetch(topTracksUrl);
@@ -1082,7 +1061,6 @@ app.get('/api/artist-stats', async (req, res) => {
       console.error('Artist Stats: top-tracks error:', text);
     }
 
-    // Pick largest image if available
     let image = null;
     if (Array.isArray(artistFull.images) && artistFull.images.length > 0) {
       image = artistFull.images[0].url;
@@ -1112,7 +1090,10 @@ app.get('/api/artist-stats', async (req, res) => {
   }
 });
 
-// List of UI services we want to register with the Service Registry
+// =====================
+// Section: Service Registry – Service Definitions
+// =====================
+
 const SERVICES_TO_REGISTER = [
   {
     id: 'song-stats',
@@ -1151,11 +1132,14 @@ const SERVICES_TO_REGISTER = [
   }
 ];
 
-// POST a single service registration to a registry (primary or backup)
+// =====================
+// Section: Service Registry – Registration Helpers
+// =====================
+
 async function registerServiceWithRegistry(registryBaseUrl, service) {
   if (!registryBaseUrl) return;
 
-  const base = registryBaseUrl.replace(/\/+$/, ''); // trim trailing slashes
+  const base = registryBaseUrl.replace(/\/+$/, '');
   const url = `${base}/services/register`;
 
   try {
@@ -1185,7 +1169,6 @@ async function registerServiceWithRegistry(registryBaseUrl, service) {
   }
 }
 
-// Register all services with primary and backup registries
 async function registerAllServices() {
   const registries = [SERVICE_REGISTRY_URL, SERVICE_REGISTRY_BACKUP_URL].filter(
     Boolean
@@ -1214,7 +1197,10 @@ async function registerAllServices() {
   }
 }
 
-// Helper: query the Service Registry for services (primary + fallback to backup)
+// =====================
+// Section: Service Registry – Query Helper
+// =====================
+
 async function queryServiceRegistry(q) {
   const registries = [SERVICE_REGISTRY_URL, SERVICE_REGISTRY_BACKUP_URL].filter(
     Boolean
@@ -1245,19 +1231,17 @@ async function queryServiceRegistry(q) {
         lastError = new Error(
           `Registry ${cleanBase} responded with status ${res.status}`
         );
-        continue; // try next registry
+        continue;
       }
 
       const data = await res.json();
-      return data; // expect an array of services
+      return data;
     } catch (err) {
       console.error('Service Registry network error at', cleanBase, err);
       lastError = err;
-      // Try the next registry
     }
   }
 
-  // If we got here, all registries failed
   throw (
     lastError ||
     new Error('Unable to contact any configured Service Registry.')
@@ -1265,14 +1249,12 @@ async function queryServiceRegistry(q) {
 }
 
 // =====================
-// API: Service search (Service Registry proxy)
+// Section: API – Service Search Proxy
 // =====================
-// GET /api/services/search?q=<text>
+
 app.get('/api/services/search', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
-
-    // Optional: if empty query, you can choose to return all services
     const services = await queryServiceRegistry(q);
 
     res.json(services);
@@ -1282,12 +1264,15 @@ app.get('/api/services/search', async (req, res) => {
   }
 });
 
+// =====================
+// Section: Server Startup
+// =====================
+
 app.listen(PORT, () => {
   console.log(
     `Spotify UI, Song Stats, Album Analyzer, Song Similarity, Trend Analytics & Artist Stats running at http://localhost:${PORT}`
   );
 
-  // Kick off registration with primary + backup registries
   registerAllServices().catch((err) => {
     console.error('Error during service registration:', err);
   });
