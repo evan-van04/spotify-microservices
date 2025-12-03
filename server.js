@@ -372,9 +372,6 @@ app.get('/api/song-stats', async (req, res) => {
       releaseDate,
       releaseYear,
       explicit: !!fullTrack.explicit,
-      marketsCount: Array.isArray(fullTrack.available_markets)
-        ? fullTrack.available_markets.length
-        : null
     };
 
     res.json(result);
@@ -1121,7 +1118,7 @@ const SERVICES_TO_REGISTER = [
     id: 'song-stats',
     name: 'Song Stats',
     description:
-      'Search for a track and view detailed stats such as popularity, duration, release year, and markets.',
+      'Search for a track and view detailed stats such as popularity, duration, and release year.',
     path: '/song-stats.html'
   },
   {
