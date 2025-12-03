@@ -1,3 +1,9 @@
+<!--
+  File: artist-stats.html
+  Author: Evan Van
+  Course: CS4471
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +12,10 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+  <!-- =====================
+       Section: Navigation Bar
+       ===================== -->
   <header>
     <div class="nav-left">
       <a href="/" class="brand">Track <span>IQ</span></a>
@@ -21,14 +31,18 @@
     </nav>
   </header>
 
+  <!-- =====================
+       Section: Page Header
+       ===================== -->
   <main>
     <h1 class="page-title">Artist Stats</h1>
     <p class="page-subtitle">
       Search any Spotify artist to see followers, popularity, album count, and their top tracks.
     </p>
 
-    <!-- Search form -->
-    
+    <!-- =====================
+         Section: Search Form
+         ===================== -->
     <div class="artist-card">
       <form class="artist-form" id="artistForm">
         <label for="artistInput">Artist Name or Keyword</label>
@@ -45,14 +59,22 @@
       </form>
     </div>
 
-    <!-- Result card -->
+    <!-- =====================
+         Section: Artist Result Container
+         ===================== -->
     <div id="artistResult" class="playlist-card"></div>
   </main>
 
+  <!-- =====================
+       Section: Footer
+       ===================== -->
   <footer>
     TrackIQ · Artist Stats
   </footer>
 
+  <!-- =====================
+       Section: Artist Stats Logic
+       ===================== -->
   <script>
     const artistForm = document.getElementById('artistForm');
     const artistInput = document.getElementById('artistInput');
@@ -78,9 +100,7 @@
           const err = await res.json().catch(() => ({}));
           const message = err && err.error ? err.error : 'Failed to fetch artist stats.';
           artistResult.innerHTML = `
-            <div class="placeholder-box">
-              ${message}
-            </div>
+            <div class="placeholder-box">${message}</div>
           `;
           return;
         }
@@ -172,5 +192,6 @@
       }
     });
   </script>
+
 </body>
 </html>

@@ -1,3 +1,9 @@
+<!--
+  File: song-similarity.html
+  Author: Evan Van
+  Course: CS4471
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +12,10 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+  <!-- =====================
+       Section: Navigation Bar
+       ===================== -->
   <header>
     <div class="nav-left">
       <a href="/" class="brand">Track <span>IQ</span></a>
@@ -21,6 +31,9 @@
     </nav>
   </header>
 
+  <!-- =====================
+       Section: Page Header
+       ===================== -->
   <main>
     <h1 class="page-title">Song Similarity</h1>
     <p class="page-subtitle">
@@ -29,6 +42,9 @@
       (same artist, related artists, era, popularity, and length).
     </p>
 
+    <!-- =====================
+         Section: Similarity Search Form
+         ===================== -->
     <div class="card similarity-card">
       <form id="similarityForm" class="similarity-form">
         <label for="similarityQuery">Song Name or Keywords</label>
@@ -45,15 +61,23 @@
         </p>
       </form>
 
+      <!-- =====================
+           Section: Loading & Error Messages
+           ===================== -->
       <div id="similarityLoading" style="display:none; margin-top: 1rem;">
         Finding similar songs…
       </div>
 
-      <div id="similarityError" style="display:none; margin-top: 1rem; color: #dc2626;">
-      </div>
+      <div id="similarityError" style="display:none; margin-top: 1rem; color: #dc2626;"></div>
 
+      <!-- =====================
+           Section: Results Container
+           ===================== -->
       <div id="similarityResult" class="similarity-result" style="display:none; margin-top: 1.5rem;">
-        <!-- Seed track header -->
+
+        <!-- =====================
+             Section: Seed Track Header
+             ===================== -->
         <div class="similar-header">
           <img
             id="seedAlbumImage"
@@ -71,21 +95,28 @@
           </div>
         </div>
 
-        <!-- Recommendations -->
+        <!-- =====================
+             Section: Recommendations
+             ===================== -->
         <div class="similar-tracks-section">
           <h3 class="tracks-title">5 related tracks</h3>
-          <div id="similarTracksGrid" class="similar-tracks-grid">
-            <!-- cards injected via JS -->
-          </div>
+          <div id="similarTracksGrid" class="similar-tracks-grid"></div>
         </div>
+
       </div>
     </div>
   </main>
 
+  <!-- =====================
+       Section: Footer
+       ===================== -->
   <footer>
     TrackIQ · Song Similarity
   </footer>
 
+  <!-- =====================
+       Section: Script Logic
+       ===================== -->
   <script>
     const similarityForm = document.getElementById('similarityForm');
     const similarityQueryInput = document.getElementById('similarityQuery');
@@ -124,7 +155,7 @@
           return;
         }
 
-        // Seed track header
+        /* ===== Seed Track Header ===== */
         const seed = data.seedTrack || {};
         const seedTrackName = seed.trackName || 'Unknown track';
         const seedArtistName = seed.artistName || 'Unknown artist';
@@ -148,7 +179,7 @@
           seedAlbumImageEl.style.display = 'none';
         }
 
-        // Recommendations
+        /* ===== Recommendations ===== */
         similarTracksGridEl.innerHTML = '';
         (data.recommendations || []).forEach((rec) => {
           const card = document.createElement('div');
@@ -180,12 +211,13 @@
 
           const meta = document.createElement('div');
           meta.className = 'similar-track-meta';
-
           const metaParts = [];
+
           if (rec.albumName) metaParts.push(rec.albumName);
           if (rec.releaseYear) metaParts.push(rec.releaseYear);
           if (rec.durationFormatted) metaParts.push(rec.durationFormatted);
           if (rec.popularity != null) metaParts.push(`Pop: ${rec.popularity} / 100`);
+
           meta.textContent = metaParts.join(' · ');
 
           const reason = document.createElement('div');
@@ -212,5 +244,6 @@
       }
     });
   </script>
+
 </body>
 </html>

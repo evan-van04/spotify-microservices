@@ -1,3 +1,9 @@
+<!--
+  File: song-stats.html
+  Author: Evan Van
+  Course: CS4471
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +12,10 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+  <!-- =====================
+       Section: Navigation Bar
+       ===================== -->
   <header>
     <div class="nav-left">
       <a href="/" class="brand">Track <span>IQ</span></a>
@@ -21,13 +31,19 @@
     </nav>
   </header>
 
+  <!-- =====================
+       Section: Page Header
+       ===================== -->
   <main>
     <h1 class="page-title">Song Stats</h1>
     <p class="page-subtitle">
-      “What is this one song like?” – Inspect high-level track stats from Spotify: artist, album,
-      popularity, playtime, release year, and more.
+      “What is this one song like?” – Inspect high-level track stats from Spotify:
+      artist, album, popularity, playtime, release year, and more.
     </p>
 
+    <!-- =====================
+         Section: Song Search Form
+         ===================== -->
     <div class="card song-card">
       <form id="songStatsForm" class="song-stats-form">
         <label for="songQuery">Song Name or Keywords</label>
@@ -40,63 +56,54 @@
         <button type="submit">Get Song Stats</button>
       </form>
 
+      <!-- =====================
+           Section: Loading & Error UI
+           ===================== -->
       <div id="loading" style="display:none; margin-top: 1rem;">
         Loading…
       </div>
 
-      <div id="error" style="display:none; margin-top: 1rem; color: #dc2626;">
-      </div>
+      <div id="error" style="display:none; margin-top: 1rem; color: #dc2626;"></div>
 
+      <!-- =====================
+           Section: Song Result Container
+           ===================== -->
       <div id="result" class="song-result" style="display:none; margin-top: 1.5rem;">
         <div class="song-header">
-            <img
-                id="albumImage"
-                src=""
-                alt=""
-                class="album-cover"
-                style="display:none;"
-            />
-            <div class="song-meta">
-                <h2 id="trackName" class="track-title"></h2>
-                <p id="artistLine" class="subtext"></p>
-            </div>
+          <img id="albumImage" src="" alt="" class="album-cover" style="display:none;" />
+          <div class="song-meta">
+            <h2 id="trackName" class="track-title"></h2>
+            <p id="artistLine" class="subtext"></p>
+          </div>
         </div>
 
-
+        <!-- =====================
+             Section: Song Stats Grid
+             ===================== -->
         <div class="stats-grid" style="margin-top: 1rem;">
-          <div class="stat-item">
-            <span id="artistStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="albumStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="releaseYearStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="durationStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="popularityStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="popularityTierStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="explicitStat"></span>
-          </div>
-          <div class="stat-item">
-            <span id="trackIdStat"></span>
-          </div>
+          <div class="stat-item"><span id="artistStat"></span></div>
+          <div class="stat-item"><span id="albumStat"></span></div>
+          <div class="stat-item"><span id="releaseYearStat"></span></div>
+          <div class="stat-item"><span id="durationStat"></span></div>
+          <div class="stat-item"><span id="popularityStat"></span></div>
+          <div class="stat-item"><span id="popularityTierStat"></span></div>
+          <div class="stat-item"><span id="explicitStat"></span></div>
+          <div class="stat-item"><span id="trackIdStat"></span></div>
         </div>
       </div>
     </div>
   </main>
 
+  <!-- =====================
+       Section: Footer
+       ===================== -->
   <footer>
     TrackIQ · Song Stats
   </footer>
 
+  <!-- =====================
+       Section: Song Stats Script Logic
+       ===================== -->
   <script>
     const form = document.getElementById('songStatsForm');
     const queryInput = document.getElementById('songQuery');
@@ -108,7 +115,6 @@
     const artistLineEl = document.getElementById('artistLine');
     const albumImageEl = document.getElementById('albumImage');
 
-    // stat lines (all "Stat: X" style)
     const artistStatEl = document.getElementById('artistStat');
     const albumStatEl = document.getElementById('albumStat');
     const releaseYearStatEl = document.getElementById('releaseYearStat');
@@ -124,7 +130,6 @@
       const q = queryInput.value.trim();
       if (!q) return;
 
-      // reset UI
       errorEl.style.display = 'none';
       errorEl.textContent = '';
       resultEl.style.display = 'none';
@@ -142,7 +147,6 @@
           return;
         }
 
-        // Header info
         const trackName = data.trackName || 'Unknown track';
         const artistName = data.artistName || 'Unknown artist';
         const albumName = data.albumName || 'Unknown album';
@@ -158,18 +162,19 @@
           albumImageEl.style.display = 'none';
         }
 
-        // Build "Stat: X" lines
         const releaseYear = data.releaseYear || 'Unknown';
         const durationFormatted = data.durationFormatted || 'Unknown';
-        const popularity = (data.popularity != null) ? `${data.popularity} / 100` : 'Unknown';
+        const popularity =
+          data.popularity != null ? `${data.popularity} / 100` : 'Unknown';
         const popularityTier = data.popularityTier || 'Popularity tier: Unknown';
         const explicitText = data.explicit ? 'Yes' : 'No';
+
         artistStatEl.textContent = `Artist(s): ${artistName}`;
         albumStatEl.textContent = `Album: ${albumName}`;
         releaseYearStatEl.textContent = `Release Year: ${releaseYear}`;
         durationStatEl.textContent = `Duration: ${durationFormatted}`;
         popularityStatEl.textContent = `Popularity: ${popularity}`;
-        popularityTierStatEl.textContent = popularityTier; // already "Popularity tier: X"
+        popularityTierStatEl.textContent = popularityTier;
         explicitStatEl.textContent = `Explicit: ${explicitText}`;
         trackIdStatEl.textContent = `Spotify Track ID: ${data.trackId || 'Unknown'}`;
 
@@ -181,5 +186,6 @@
       }
     });
   </script>
+
 </body>
 </html>

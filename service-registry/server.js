@@ -1,33 +1,24 @@
-// server.js  --- TrackIQ Service Registry (primary OR backup)
+/**
+ * File: server.js (TrackIQ Service Registry)
+ * Author: Evan Van
+ * Course: CS4471
+ */
 
 const express = require('express');
-
 const app = express();
 
-// PORT is injected by Render; fallback for local dev.
 const PORT = process.env.PORT || 8082;
-
-// Just for logging so you can distinguish primary vs backup
 const INSTANCE_NAME = process.env.INSTANCE_NAME || 'service-registry';
 
-// Built-in JSON body parser
 app.use(express.json());
 
-// In-memory store: id -> service object
-// A "service" looks like:
-// {
-//   id: 'song-stats',
-//   name: 'Song Stats',
-//   description: '...',
-//   url: 'https://trackiq-spotify-main.onrender.com/song-stats.html',
-//   createdAt: '2025-12-02T...',
-//   updatedAt: '2025-12-02T...'
-// }
+// In-memory store of registered services
 const services = new Map();
 
-/**
- * Basic health endpoint
- */
+// =====================
+// Section: Health / Root Endpoint
+// =====================
+
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
@@ -36,11 +27,10 @@ app.get('/', (req, res) => {
   });
 });
 
-/**
- * Register or update a service.
- * POST /services/register
- * Body: { id, name, description, url }
- */
+// =====================
+// Section: Register or Update a Service
+// =====================
+
 app.post('/services/register', (req, res) => {
   const { id, name, description, url } = req.body || {};
 
@@ -64,17 +54,15 @@ app.post('/services/register', (req, res) => {
 
   services.set(id, service);
 
-  console.log(
-    `[${INSTANCE_NAME}] Registered service "${id}" -> ${url}`
-  );
+  console.log(`[${INSTANCE_NAME}] Registered service "${id}" -> ${url}`);
 
   res.status(existing ? 200 : 201).json(service);
 });
 
-/**
- * List all services (no filtering).
- * GET /services
- */
+// =====================
+// Section: List All Services
+// =====================
+
 app.get('/services', (req, res) => {
   const all = Array.from(services.values()).sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -82,13 +70,12 @@ app.get('/services', (req, res) => {
   res.json(all);
 });
 
-/**
- * Search services by q across id, name, description, url (case-insensitive).
- * GET /services/search?q=song
- */
+// =====================
+// Section: Search Services
+// =====================
+
 app.get('/services/search', (req, res) => {
   const q = (req.query.q || '').toString().trim().toLowerCase();
-
   let results = Array.from(services.values());
 
   if (q) {
@@ -98,18 +85,17 @@ app.get('/services/search', (req, res) => {
     });
   }
 
-  // Sort alphabetically by name for a nicer UI
   results.sort((a, b) => a.name.localeCompare(b.name));
-
   res.json(results);
 });
 
-/**
- * Delete a service by id.
- * DELETE /services/:id
- */
+// =====================
+// Section: Delete a Service
+// =====================
+
 app.delete('/services/:id', (req, res) => {
   const id = req.params.id;
+
   if (!services.has(id)) {
     return res.status(404).json({ error: 'Service not found' });
   }
@@ -119,12 +105,19 @@ app.delete('/services/:id', (req, res) => {
   res.status(204).send();
 });
 
-// Optional: periodic log so you know it’s alive
+// =====================
+// Section: Periodic Heartbeat Log
+// =====================
+
 setInterval(() => {
   console.log(
     `[${INSTANCE_NAME}] heartbeat – ${services.size} services registered`
   );
-}, 60 * 1000); // every 60s
+}, 60 * 1000);
+
+// =====================
+// Section: Server Startup
+// =====================
 
 app.listen(PORT, () => {
   console.log(
