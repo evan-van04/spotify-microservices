@@ -253,6 +253,37 @@ app.get('/spotify/search-albums', async (req, res) => {
   }
 });
 
+// NEW: Get album details (including tracks)
+// GET /spotify/albums/:albumId
+app.get('/spotify/albums/:albumId', async (req, res) => {
+  try {
+    const albumId = req.params.albumId;
+    const token = await getSpotifyAppToken();
+
+    const url = `https://api.spotify.com/v1/albums/${albumId}?market=US`;
+    const albumRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!albumRes.ok) {
+      const text = await albumRes.text();
+      console.error('Spotify album details error:', text);
+      return res
+        .status(albumRes.status)
+        .json({ error: 'Spotify album details failed', raw: text });
+    }
+
+    const data = await albumRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Proxy albums error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // NEW: Search artists by name
 // GET /spotify/search-artists?q=Drake
 app.get('/spotify/search-artists', async (req, res) => {

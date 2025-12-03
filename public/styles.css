@@ -694,3 +694,121 @@ footer {
   font-size: 0.8rem;
   color: #6b7280;
 }
+
+/**** service registry */
+
+.registry-card {
+  margin-top: 2rem;
+}
+
+.registry-subtitle {
+  font-size: 0.95rem;
+  color: #cbd5f5;
+  margin-bottom: 1rem;
+}
+
+.registry-form {
+  margin-bottom: 1rem;
+}
+
+.registry-form label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.registry-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.registry-input-row input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #f9fafb;
+}
+
+.registry-input-row input::placeholder {
+  color: #6b7280;
+}
+
+.registry-input-row button {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.registry-input-row button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.service-item {
+  display: block;
+  text-decoration: none;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.6rem;
+  background: #020617;
+  border: 1px solid #1f2937;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.service-item:hover {
+  background: #0b1120;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.service-header h3 {
+  font-size: 1rem;
+}
+
+.service-id {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.service-desc {
+  font-size: 0.9rem;
+  color: #cbd5f5;
+  margin-bottom: 0.25rem;
+}
+
+.service-url {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.no-results {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.no-results.error {
+  color: #f97373;
+}

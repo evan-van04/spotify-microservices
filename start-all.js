@@ -39,10 +39,12 @@ function openBrowser(url) {
 // Paths to server.js files
 const authPath = path.join(__dirname, 'spotify-auth', 'server.js');
 const mainPath = path.join(__dirname, 'server.js');
+const serviceRegistryPath = path.join(__dirname, 'service-registry', 'server.js');
 
 // Run services (dotenv will load the .env automatically)
 const authProc = runService('Spotify Auth', authPath);
 const mainProc = runService('Main Service', mainPath);
+const serviceRegistryProc = runService('Service Registry', serviceRegistryPath);
 
 // Open the main UI in default browser
 openBrowser('http://localhost:8080');

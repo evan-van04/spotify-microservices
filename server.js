@@ -1,3 +1,5 @@
+const REGISTRY_URL = process.env.SERVICE_REGISTRY_URL;
+
 // 8080 server.js  --- main UI + microservices
 
 const express = require('express');
@@ -13,6 +15,10 @@ const PORT = process.env.PORT || 8080;
 // Base URL for spotify-auth microservice
 const SPOTIFY_AUTH_BASE_URL =
   process.env.SPOTIFY_AUTH_BASE_URL || 'http://localhost:8081';
+
+// Base URL for Service Registry
+const SERVICE_REGISTRY_URL =
+  process.env.SERVICE_REGISTRY_URL || 'http://localhost:8082';
 
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
@@ -1099,6 +1105,41 @@ app.get('/api/artist-stats', async (req, res) => {
   } catch (err) {
     console.error('Artist Stats endpoint error:', err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Helper: query the Service Registry for services
+async function queryServiceRegistry(q) {
+  const url =
+    `${SERVICE_REGISTRY_URL}/services/search` +
+    `?q=${encodeURIComponent(q || '')}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Service Registry search error:', res.status, text);
+    throw new Error('Failed to reach Service Registry');
+  }
+
+  const data = await res.json();
+  return data; // expect an array of services
+}
+
+// =====================
+// API: Service search (Service Registry proxy)
+// =====================
+// GET /api/services/search?q=<text>
+app.get('/api/services/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+
+    // Optional: if empty query, you can choose to return all services
+    const services = await queryServiceRegistry(q);
+
+    res.json(services);
+  } catch (err) {
+    console.error('Service search endpoint error:', err);
+    res.status(502).json({ error: 'Unable to contact Service Registry.' });
   }
 });
 
