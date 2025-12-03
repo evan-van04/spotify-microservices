@@ -485,3 +485,4 @@ app.get('/spotify/artists/:artistId/related-artists', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`spotify-auth service listening on port ${PORT}`);
 });
+module.exports = { getSpotifyAppToken };

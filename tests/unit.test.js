@@ -1,6 +1,9 @@
-import 'dotenv/config'; // <-- ensure .env variables are loaded
+import { config } from 'dotenv';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { getSpotifyAppToken } from '../spotify-auth/server.js';
+
+// Load .env from the spotify-auth directory
+config({ path: './spotify-auth/.env' });
 
 describe('Unit Tests - Spotify Auth', () => {     
 
