@@ -42,9 +42,16 @@ const mainPath = path.join(__dirname, 'server.js');
 const serviceRegistryPath = path.join(__dirname, 'service-registry', 'server.js');
 
 // Run services (dotenv will load the .env automatically)
-const authProc = runService('Spotify Auth', authPath);
+const serviceRegistryProc = runService('Service Registry', serviceRegistryPath, {
+  PORT: '8082'
+});
+
+console.log('Starting Spotify Auth on port 8081...');
+const authProc = runService('Spotify Auth', authPath, {
+  PORT: '8081'
+});
 const mainProc = runService('Main Service', mainPath);
-const serviceRegistryProc = runService('Service Registry', serviceRegistryPath);
+
 
 // Open the main UI in default browser
 openBrowser('http://localhost:8080');
