@@ -39,8 +39,10 @@ Move into the project folder:
 Inside the project folder (`spotify-microservices`), run:
 
     npm install
+    npm install dotenv
+    npm install -D vitest
 
-This will install all required packages (including Express) into the `node_modules` folder.
+This will install all required packages (including Express) into the `node_modules` folder. Vitest is used for testing
 
 ---
 

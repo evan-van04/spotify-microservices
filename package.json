@@ -6,7 +6,8 @@
   "scripts": {
     "start:auth": "node spotify-auth/server.js",
     "start:main": "node server.js",
-    "start": "concurrently --kill-others-on-fail \"npm run start:auth\" \"npm run start:main\""
+    "start": "concurrently --kill-others-on-fail \"npm run start:auth\" \"npm run start:main\"",
+    "test": "vitest"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
@@ -14,6 +15,7 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "vitest": "^4.0.15"
   }
 }
