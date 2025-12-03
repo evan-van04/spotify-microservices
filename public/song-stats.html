@@ -86,9 +86,6 @@
             <span id="explicitStat"></span>
           </div>
           <div class="stat-item">
-            <span id="marketsStat"></span>
-          </div>
-          <div class="stat-item">
             <span id="trackIdStat"></span>
           </div>
         </div>
@@ -119,7 +116,6 @@
     const popularityStatEl = document.getElementById('popularityStat');
     const popularityTierStatEl = document.getElementById('popularityTierStat');
     const explicitStatEl = document.getElementById('explicitStat');
-    const marketsStatEl = document.getElementById('marketsStat');
     const trackIdStatEl = document.getElementById('trackIdStat');
 
     form.addEventListener('submit', async (e) => {
@@ -168,10 +164,6 @@
         const popularity = (data.popularity != null) ? `${data.popularity} / 100` : 'Unknown';
         const popularityTier = data.popularityTier || 'Popularity tier: Unknown';
         const explicitText = data.explicit ? 'Yes' : 'No';
-        const marketsCount = (data.marketsCount != null)
-          ? `${data.marketsCount} markets`
-          : 'Unknown';
-
         artistStatEl.textContent = `Artist(s): ${artistName}`;
         albumStatEl.textContent = `Album: ${albumName}`;
         releaseYearStatEl.textContent = `Release Year: ${releaseYear}`;
@@ -179,7 +171,6 @@
         popularityStatEl.textContent = `Popularity: ${popularity}`;
         popularityTierStatEl.textContent = popularityTier; // already "Popularity tier: X"
         explicitStatEl.textContent = `Explicit: ${explicitText}`;
-        marketsStatEl.textContent = `Available Markets: ${marketsCount}`;
         trackIdStatEl.textContent = `Spotify Track ID: ${data.trackId || 'Unknown'}`;
 
         resultEl.style.display = 'block';
