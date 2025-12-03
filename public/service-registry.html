@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Service Registry · TrackIQ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="nav-left">
+      <a href="/" class="brand">Track<span>IQ</span></a>
+    </div>
+    <nav>
+      <ul>
+        <!-- IMPORTANT: no link to the registry here, 
+             so it's NOT accessible from other pages -->
+        <li><a href="/song-stats.html">Song Stats</a></li>
+        <li><a href="/song-similarity.html">Song Similarity</a></li>
+        <li><a href="/trend-analytics.html">Trend Analytics</a></li>
+        <li><a href="/artist-stats.html">Artist Stats</a></li>
+        <li><a href="/album-analyzer.html">Album Analyzer</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1 class="page-title">Service Registry</h1>
+    <p class="registry-subtitle">
+      View all registered TrackIQ microservices and jump to their UIs.
+    </p>
+
+    <section class="card registry-card">
+      <form id="registrySearchForm" class="registry-form">
+        <label for="registrySearchInput">
+          Filter services by name, description, or URL
+        </label>
+        <div class="registry-input-row">
+          <input
+            type="text"
+            id="registrySearchInput"
+            placeholder="Search services..."
+          />
+          <button type="submit">Search</button>
+        </div>
+      </form>
+
+      <div id="registryStatus" class="no-results"></div>
+      <div id="serviceList" class="service-list"></div>
+    </section>
+  </main>
+
+  <footer>
+    TrackIQ · Spotify Microservices · Service Registry
+  </footer>
+
+  <script>
+    async function fetchServices(query) {
+      const statusEl = document.getElementById('registryStatus');
+      const listEl = document.getElementById('serviceList');
+
+      statusEl.textContent = 'Loading services...';
+      statusEl.classList.remove('error');
+      listEl.innerHTML = '';
+
+      const params = new URLSearchParams();
+      if (query && query.trim() !== '') {
+        params.set('q', query.trim());
+      }
+
+      try {
+        const res = await fetch('/api/services/search?' + params.toString());
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('Service registry fetch error:', text);
+          statusEl.textContent =
+            'Failed to reach Service Registry (try again later).';
+          statusEl.classList.add('error');
+          return;
+        }
+
+        const services = await res.json();
+        renderServices(Array.isArray(services) ? services : []);
+      } catch (err) {
+        console.error('Service registry fetch error:', err);
+        statusEl.textContent =
+          'Error contacting Service Registry (network issue?).';
+        statusEl.classList.add('error');
+      }
+    }
+
+    function renderServices(services) {
+      const statusEl = document.getElementById('registryStatus');
+      const listEl = document.getElementById('serviceList');
+      listEl.innerHTML = '';
+
+      if (!services.length) {
+        statusEl.textContent = 'No services found.';
+        statusEl.classList.remove('error');
+        return;
+      }
+
+      statusEl.textContent = '';
+      statusEl.classList.remove('error');
+
+      services.forEach((svc, idx) => {
+        const a = document.createElement('a');
+        a.className = 'service-item';
+        a.href = svc.url || '#';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+
+        const header = document.createElement('div');
+        header.className = 'service-header';
+
+        const title = document.createElement('h3');
+        title.textContent = svc.name || 'Unnamed Service';
+
+        const idSpan = document.createElement('span');
+        idSpan.className = 'service-id';
+        idSpan.textContent = svc.id ? `ID: ${svc.id}` : `#${idx + 1}`;
+
+        header.appendChild(title);
+        header.appendChild(idSpan);
+
+        const desc = document.createElement('p');
+        desc.className = 'service-desc';
+        desc.textContent =
+          svc.description || 'No description provided for this service.';
+
+        const url = document.createElement('p');
+        url.className = 'service-url';
+        url.textContent = svc.url || 'No URL registered';
+
+        a.appendChild(header);
+        a.appendChild(desc);
+        a.appendChild(url);
+
+        listEl.appendChild(a);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registrySearchForm');
+      const input = document.getElementById('registrySearchInput');
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetchServices(input.value);
+      });
+
+      // Load all services on first load (empty query)
+      fetchServices('');
+    });
+  </script>
+</body>
+</html>

@@ -20,6 +20,13 @@ const SPOTIFY_AUTH_BASE_URL =
 const SERVICE_REGISTRY_URL =
   process.env.SERVICE_REGISTRY_URL || 'http://localhost:8082';
 
+// Backup Registry
+const SERVICE_REGISTRY_BACKUP_URL =
+  process.env.SERVICE_REGISTRY_BACKUP_URL || null;
+
+const PUBLIC_BASE_URL =
+  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`
+
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -1108,21 +1115,156 @@ app.get('/api/artist-stats', async (req, res) => {
   }
 });
 
-// Helper: query the Service Registry for services
-async function queryServiceRegistry(q) {
-  const url =
-    `${SERVICE_REGISTRY_URL}/services/search` +
-    `?q=${encodeURIComponent(q || '')}`;
+// List of UI services we want to register with the Service Registry
+const SERVICES_TO_REGISTER = [
+  {
+    id: 'song-stats',
+    name: 'Song Stats',
+    description:
+      'Search for a track and view detailed stats such as popularity, duration, release year, and markets.',
+    path: '/song-stats.html'
+  },
+  {
+    id: 'song-similarity',
+    name: 'Song Similarity',
+    description:
+      'Find recommended tracks based on similarity in artist, era, popularity, and duration.',
+    path: '/song-similarity.html'
+  },
+  {
+    id: 'trend-analytics',
+    name: 'Trend Analytics',
+    description:
+      'Analyze trends for top tracks across markets with aggregated popularity and release year stats.',
+    path: '/trend-analytics.html'
+  },
+  {
+    id: 'artist-stats',
+    name: 'Artist Stats',
+    description:
+      'View key metrics for artists such as followers, popularity tier, genres, and top tracks.',
+    path: '/artist-stats.html'
+  },
+  {
+    id: 'album-analyzer',
+    name: 'Album Analyzer',
+    description:
+      'Break down an album with per-track stats, popularity distribution, and total runtime.',
+    path: '/album-analyzer.html'
+  }
+];
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    const text = await res.text();
-    console.error('Service Registry search error:', res.status, text);
-    throw new Error('Failed to reach Service Registry');
+// POST a single service registration to a registry (primary or backup)
+async function registerServiceWithRegistry(registryBaseUrl, service) {
+  if (!registryBaseUrl) return;
+
+  const base = registryBaseUrl.replace(/\/+$/, ''); // trim trailing slashes
+  const url = `${base}/services/register`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(service)
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(
+        `Failed to register service "${service.id}" with ${base}:`,
+        res.status,
+        text
+      );
+    } else {
+      console.log(
+        `Registered service "${service.id}" with registry ${base}`
+      );
+    }
+  } catch (err) {
+    console.error(
+      `Error registering service "${service.id}" with registry ${base}:`,
+      err
+    );
+  }
+}
+
+// Register all services with primary and backup registries
+async function registerAllServices() {
+  const registries = [SERVICE_REGISTRY_URL, SERVICE_REGISTRY_BACKUP_URL].filter(
+    Boolean
+  );
+
+  if (registries.length === 0) {
+    console.warn(
+      'No SERVICE_REGISTRY_URL or SERVICE_REGISTRY_BACKUP_URL configured; skipping service registration.'
+    );
+    return;
   }
 
-  const data = await res.json();
-  return data; // expect an array of services
+  const urlForPath = (path) => `${PUBLIC_BASE_URL}${path}`;
+
+  for (const registryBase of registries) {
+    for (const svc of SERVICES_TO_REGISTER) {
+      const payload = {
+        id: svc.id,
+        name: svc.name,
+        description: svc.description,
+        url: urlForPath(svc.path)
+      };
+
+      await registerServiceWithRegistry(registryBase, payload);
+    }
+  }
+}
+
+// Helper: query the Service Registry for services (primary + fallback to backup)
+async function queryServiceRegistry(q) {
+  const registries = [SERVICE_REGISTRY_URL, SERVICE_REGISTRY_BACKUP_URL].filter(
+    Boolean
+  );
+  if (registries.length === 0) {
+    throw new Error('No Service Registry URLs configured.');
+  }
+
+  let lastError = null;
+  const query = q || '';
+  for (const base of registries) {
+    const cleanBase = base.replace(/\/+$/, '');
+    const url =
+      `${cleanBase}/services/search` +
+      `?q=${encodeURIComponent(query)}`;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(
+          'Service Registry search error:',
+          res.status,
+          text,
+          'at',
+          cleanBase
+        );
+        lastError = new Error(
+          `Registry ${cleanBase} responded with status ${res.status}`
+        );
+        continue; // try next registry
+      }
+
+      const data = await res.json();
+      return data; // expect an array of services
+    } catch (err) {
+      console.error('Service Registry network error at', cleanBase, err);
+      lastError = err;
+      // Try the next registry
+    }
+  }
+
+  // If we got here, all registries failed
+  throw (
+    lastError ||
+    new Error('Unable to contact any configured Service Registry.')
+  );
 }
 
 // =====================
@@ -1147,4 +1289,9 @@ app.listen(PORT, () => {
   console.log(
     `Spotify UI, Song Stats, Album Analyzer, Song Similarity, Trend Analytics & Artist Stats running at http://localhost:${PORT}`
   );
+
+  // Kick off registration with primary + backup registries
+  registerAllServices().catch((err) => {
+    console.error('Error during service registration:', err);
+  });
 });
